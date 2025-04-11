@@ -96,8 +96,6 @@ if __name__ == "__main__":
                 client=qdrant_client,
                 encoder=encoder
             )
-            "going on a hike and meeting a blackbear, he teases that the experience gave him a realisation which seems to have 'cured' his anxiety, he says he doesn't know in what format to tell the story"
-
             print("Finished storing.")
         except Exception as e:
             print(f"An error occurred: {str(e)}")
