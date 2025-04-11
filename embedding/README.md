@@ -12,7 +12,15 @@ This tool helps you answer questions like:
 - In this first demo, a user on reddit asked [when did the podcaster talked about "the word cat only means something because it isn't the word cow"](https://www.reddit.com/r/PhilosophizeThis/comments/136f4p2/looking_for_an_episodephilosopher/)
 
 
+https://github.com/user-attachments/assets/43cd4ccc-d9ae-492c-a924-9feec996820e
+
+
+
 - In the second demo, similarly a user on reddit asked [when did the podcaster talked about "romantic love starting to resemble greed"](https://www.reddit.com/r/PhilosophizeThis/comments/14jqc9b/help_me_find_episode/)
+
+
+https://github.com/user-attachments/assets/166c6682-45b3-4450-a1c2-d0118545f4b5
+
 
 ---
 
