@@ -1,52 +1,74 @@
-- A Rag based python cli app to search through youtube subtitles/transcripts
+### What is This?
+This is a Retrieval-Augmented Generation (RAG) based Python CLI application designed to search through YouTube subtitles and transcripts.
 
-## How it works
+#### Use Cases
+This tool helps you answer questions like:
+- "In which episode did the podcaster talk about X?"
+  - Ideal for podcasts or series with hundreds of episodes, where manually searching is impractical. It identifies the specific episodes and timestamps (in seconds) where the topic "X" is mentioned.
+  - Supports long-form videos and playlists.
 
-- How it works, it has two parts load and search
-  - Load
-    - downloads a transcripts from YouTube url using yt_dlp
-    - parse and segment the transcripts into chunks of fixed time-length
-    - load the chunks to vector db(qdrant this time)
-  - Search
-    - given a query the program passes the query to the vector store
-    - result includes
-      - video title, score and link with start and end time in second
+#### Demos
 
-## How to use or test
-
-- Start the vector store
-  - [Local Quickstart - Qdrant](https://qdrant.tech/documentation/quickstart/)
-
-- Load a video or playlist
-  - playlist_name: name to uniquely identify this playlist, used as table name(collection name)
-    - this field is required
-    - you can load many playlists
-    - if you try to load the same playlist again, the existing data and files will be deleted first.
-  - playlist_url: the link to the playlist or a single video
-
-```
-uv run main.py --name {playlist_name} --load {playlist_url}
-```
-
-- Search your collections
-    - query: what you are searching for
-      - ex: could be what you remember but do not know which episode it is
-
-```
-uv run main.py --name {playlist_name} --search {query}
-```
-
-- Load and search
-
-```
-uv run main.py --name {playlist_name} --load {playlist_url} --search {query}
-```
+- In this first demo, a user on reddit asked [when did the podcaster talked about "the word cat only means something because it isn't the word cow"](https://www.reddit.com/r/PhilosophizeThis/comments/136f4p2/looking_for_an_episodephilosopher/)
 
 
-- test
-  - D: load, search
-  - D: load the same url
-    - D: what happens to folder and database
-  - load a video url
-  - search is working per window frame, fix
-  - check load and search
+- In the second demo, similarly a user on reddit asked [when did the podcaster talked about "romantic love starting to resemble greed"](https://www.reddit.com/r/PhilosophizeThis/comments/14jqc9b/help_me_find_episode/)
+
+---
+
+### How It Works
+The application operates in two main phases: **Load** and **Search**.
+
+#### Load Phase
+- Downloads transcripts from a YouTube URL using `yt-dlp`.
+- Parses and segments the transcripts into fixed time-length chunks.
+- Stores these chunks in a vector database (currently Qdrant).
+
+#### Search Phase
+- Accepts a user query and queries the vector store.
+- Returns results including:
+  - Video title
+  - Relevance score
+  - Link to the video with start and end times (in seconds)
+
+### How to Use or Test
+
+#### Prerequisites
+- Ensure the vector store (Qdrant) is running. Follow the [Local Quickstart - Qdrant](https://qdrant.tech/documentation/quickstart/) guide to set it up locally.
+
+#### Commands
+
+1. **Load a Video or Playlist**
+   - Use the `--name` flag to specify a unique identifier for the playlist (this serves as the collection name in the database).
+   - Use the `--load` flag followed by the URL of a playlist or single video.
+   - **Note**: If you attempt to load the same playlist again, existing data and files will be deleted first.
+
+   Example:
+   ```bash
+   uv run main.py --name {playlist_name} --load {playlist_url}
+   ```
+
+   - You can load multiple playlists, each identified by a unique name.
+
+2. **Search Your Collections**
+   - Use the `--search` flag followed by your query (e.g., a topic or phrase you’re looking for).
+
+   Example:
+   ```bash
+   uv run main.py --name {playlist_name} --search {query}
+   ```
+
+   - Example query: "Which episode discussed artificial intelligence?"
+
+3. **Load and Search in One Command**
+   - Combine both operations by specifying both `--load` and `--search` in the same command.
+
+   Example:
+   ```bash
+   uv run main.py --name {playlist_name} --load {playlist_url} --search {query}
+   ```
+
+### Limitations and Further Improvements
+  - Relies on a separate Qdrant instance; consider using a locally embedded database instead of Docker for simplicity.
+  - Search accuracy may need improvement; explore techniques to enhance relevance and precision.
+  - Currently, tested only on YouTube videos.
