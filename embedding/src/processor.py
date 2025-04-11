@@ -38,27 +38,25 @@ def process_subtitle_file(input_path, segment_time_second: int):
         file_path = os.path.join(input_path, file_name)
 
         start_time = 0
-        text = ""
+        text = {}
         file_name_clean = clean_file_name(file_name)
         captions = webvtt.read(file_path)
 
         for caption in captions:
             end_time = time_to_seconds(caption.end)
+            for t in caption.text.strip().split("\n"):
+                text[t] = None
 
             if end_time - start_time >= segment_time_second or caption == captions[-1]:
-                if caption == captions[-1]:
-                    text = text + " " + caption.text
 
                 chunks[file_name_clean].append({
                     "file_name": file_name_clean,
                     "start": start_time,
                     "end": end_time,
-                    "text": text.replace("\n", " "),
+                    "text": " ".join(text.keys()),
                     "video_id": get_youtube_id(file_name)
                 })
 
-                text = caption.text
+                text = {}
                 start_time = end_time
-            else:
-                text = text + " " + caption.text
     return chunks
