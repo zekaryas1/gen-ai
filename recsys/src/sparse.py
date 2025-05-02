@@ -11,8 +11,6 @@ MOVIES_CSV = os.path.join(DATA_DIR, "movies.csv")
 RATINGS_CSV = os.path.join(DATA_DIR, "ratings.csv")
 QDRANT_URL = "http://localhost:6333"
 COLLECTION_NAME = "movies"
-TOP_K = 7  # Number of recommendations to return.
-
 
 class Recommender:
     """

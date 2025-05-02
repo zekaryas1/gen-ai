@@ -1,6 +1,8 @@
 from src.sparse import Recommender
 
 START_YEAR = 2000
+TOP_K = 7  # Number of recommendations to return.
+
 
 if __name__ == "__main__":
     recommender = Recommender()
