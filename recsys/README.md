@@ -1,0 +1,6 @@
+- Recommendation script using qdrant and sparse vector
+  - requirement
+    - a qdrant database
+    - update your movie reference in main.py
+  - command to run
+    - `uv run main.py`
