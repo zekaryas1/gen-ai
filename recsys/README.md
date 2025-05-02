@@ -1,9 +1,9 @@
 - Recommendation script using qdrant and sparse vector
   - Based on the `MovieLense` dataset of 2018
-  - requirement
-    - a qdrant database
-    - update your movie ratings in main.py
-  - command to run
+  - Requirement
+    - A qdrant database
+    - Update your movie ratings in main.py
+  - Command to run
     - `uv run main.py`
 
 ```sh
