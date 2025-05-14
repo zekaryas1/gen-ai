@@ -4,6 +4,7 @@ import os
 from google.adk import Runner
 from google.adk.agents import Agent
 from google.adk.sessions import InMemorySessionService
+from google.adk.tools import ToolContext
 from google.genai import types # For creating message Content/Parts
 import asyncio
 from dotenv import load_dotenv
@@ -13,7 +14,7 @@ AGENT_MODEL = "gemini-2.0-flash"
 load_dotenv()
 
 
-def get_weather(city: str) -> dict:
+def get_weather(city: str, tool_context: ToolContext) -> dict:
     """Retrieves the current weather report for a specified city.
 
     Args:
@@ -27,6 +28,7 @@ def get_weather(city: str) -> dict:
     """
     print(f"--- Tool: get_weather called for city: {city} ---") # Log tool execution
     city_normalized = city.lower().replace(" ", "") # Basic normalization
+    tool_context.state["last_checked_city"] = city
 
     # Mock weather data
     mock_weather_db = {
@@ -41,22 +43,25 @@ def get_weather(city: str) -> dict:
         return {"status": "error", "error_message": f"Sorry, I don't have weather information for '{city}'."}
 
 
-def say_hello(name: str = "there") -> str:
-    """Provides a simple greeting, optionally addressing the user by name.
-
-    Args:
-        name (str, optional): The name of the person to greet. Defaults to "there".
+def say_hello( tool_context: ToolContext) -> str:
+    """Provides a simple greeting.
 
     Returns:
         str: A friendly greeting message.
     """
+    name = tool_context.state.get("user_preferred_name", "there")
+
     print(f"--- Tool: say_hello called with name: {name} ---")
     return f"Hello, {name}!"
 
-def say_goodbye() -> str:
+def say_goodbye(tool_context: ToolContext) -> str:
     """Provides a simple farewell message to conclude the conversation."""
     print(f"--- Tool: say_goodbye called ---")
-    return "Goodbye! Have a great day."
+
+    name = tool_context.state.get("user_preferred_name", "there")
+
+
+    return f"Goodbye! {name}, Have a great day."
 
 greeting_agent = Agent(
         model = AGENT_MODEL,
@@ -94,7 +99,8 @@ weather_agent_team = Agent(
                     "If it's a weather request, handle it yourself using 'get_weather'. "
                     "For anything else, respond appropriately or state you cannot handle it.",
         tools=[get_weather],
-        sub_agents=[greeting_agent, farewell_agent]
+        sub_agents=[greeting_agent, farewell_agent],
+        output_key="last_weather_report"
 )
 
 
@@ -111,7 +117,10 @@ SESSION_ID = "session_001" # Using a fixed ID for simplicity
 session = session_service.create_session(
     app_name=APP_NAME,
     user_id=USER_ID,
-    session_id=SESSION_ID
+    session_id=SESSION_ID,
+    state={
+        "user_preferred_name": "Zack"
+    }
 )
 print(f"Session created: App='{APP_NAME}', User='{USER_ID}', Session='{SESSION_ID}'")
 
@@ -163,11 +172,17 @@ async def run_conversation():
                            runner=runner,
                            user_id=USER_ID,
                            session_id=SESSION_ID)
+
+    stored_session = session_service.sessions[APP_NAME][USER_ID][SESSION_ID]
+    stored_session.state["user_preferred_name"] = "Zekaryas"
+
     await call_agent_async(query="Thanks, bye!",
                            runner=runner,
                            user_id=USER_ID,
                            session_id=SESSION_ID)
 
+    print(f"Last checked city: {stored_session.state.get("last_checked_city", "city not found")}")
+    print(f"Last weather report: {stored_session.state.get("last_weather_report", "weather report not found")}")
 
 if __name__ == "__main__":
      try:
