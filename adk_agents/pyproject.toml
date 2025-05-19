@@ -6,4 +6,5 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "google-adk>=0.5.0",
+    "pandas>=2.2.3",
 ]
