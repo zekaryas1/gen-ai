@@ -61,31 +61,3 @@ def file_processor_tool(tool_context: ToolContext) -> Dict[str, str]:
 
 
 
-def run_query(sql: str) -> Dict[str, Any]:
-    """
-    Executes a SQL query on the local SQLite database.
-
-    Args:
-        sql (str): The SQL query to execute.
-
-    Returns:
-        Dict[str, Any]: A dictionary containing:
-            - status: 'success' or 'error'
-            - result: Query results or error message
-    """
-    try:
-        conn = sqlite3.connect("local.db")
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        results = cursor.fetchall()
-        conn.close()
-
-        return {
-            "status": "success",
-            "result": results if results else "No results found"
-        }
-    except sqlite3.Error as e:
-        return {
-            "status": "error",
-            "result": f"Query execution failed: {str(e)}"
-        }
