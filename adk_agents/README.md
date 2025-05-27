@@ -1,9 +1,13 @@
 # ADK(Google's agent development kit)
 
+
+https://github.com/user-attachments/assets/3b28f5c2-f22f-40b6-b365-4e9cc2f28dd3
+
+
 - Two Agents
     1. Weather Agent
       - Quick start task from the documentation
-    2. File Analytics agent
+    2. File Analytics agent(Main)
       - CSV analyzer agent using SQL
 
 
@@ -18,4 +22,4 @@
 - Open ask web interface, while inside agents folder
   - `adk web`
     - select `file_analytics_agent` from dropdown
-    - `say hello` or upload a csv file to interact with
+    - `say hello` or upload a csv file to interact with the agent
