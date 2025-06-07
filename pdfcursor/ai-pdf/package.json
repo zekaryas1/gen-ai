@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build && npm run pdfJsToBuild",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "pdfJsToBuild": "node move-pdf-build.ts"
+    "pdfJsToBuild": "node move-pdf-build.js"
   },
   "dependencies": {
     "next": "15.3.3",
