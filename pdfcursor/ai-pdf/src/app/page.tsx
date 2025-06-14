@@ -6,11 +6,12 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import OutlineRenderer, { OutlineItem } from "@/components/OutlineRenderer";
+import OutlineRenderer from "@/components/OutlineRenderer";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 import PDFPageWrapper from "@/components/PDFPageWrapper";
 import { getPageIndex } from "@/utils/page.utils";
 import Toolbar from "@/components/Toolbar";
+import { OutlineItem } from "@/models/OutlineItem";
 
 // Worker setup
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
