@@ -1,4 +1,5 @@
 import { useChat } from "@ai-sdk/react";
+import { MemoizedMarkdown } from "@/components/MemoizedMarkdown";
 
 interface ChatInterfaceProps {
   getCurrentPageTextContent: () => Promise<string>;
@@ -34,7 +35,9 @@ export default function ChatInterface(props: ChatInterfaceProps) {
                 </p>
               </div>
             ) : (
-              <div className={"flex justify-start mb-4"}>{message.content}</div>
+              <div className={"flex justify-start mb-4"}>
+                <MemoizedMarkdown id={message.id} content={message.content} />
+              </div>
             )}
           </div>
         ))}
