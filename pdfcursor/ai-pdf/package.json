@@ -10,11 +10,15 @@
     "pdfJsToBuild": "node move-pdf-build.js"
   },
   "dependencies": {
+    "@ai-sdk/google": "^1.2.19",
+    "@ai-sdk/react": "^1.2.12",
+    "ai": "^4.3.16",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-pdf": "^9.2.1",
-    "react-virtuoso": "^4.12.8"
+    "react-virtuoso": "^4.12.8",
+    "zod": "^3.25.64"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
