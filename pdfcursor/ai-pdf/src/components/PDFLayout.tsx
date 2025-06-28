@@ -17,6 +17,7 @@ import Toolbar from "@/components/Toolbar";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 import PDFPageWrapper from "@/components/PDFPageWrapper";
 import ChatInterface from "@/components/ChatInterface";
+import { Conditional } from "@/components/ConditionalRenderer";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -27,6 +28,7 @@ export default function PDFLayout(props: PDFLayoutProps) {
   const { pdf, virtuosoRef } = props;
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
   const [outline, setOutline] = useState<OutlineItem[]>([]);
+  const pdfUtil = usePDFUtil(pdf);
 
   //drag and drop conf
   const [droppedItemData, setDroppedItemData] = useState<
@@ -40,7 +42,6 @@ export default function PDFLayout(props: PDFLayoutProps) {
     },
   });
   const sensors = useSensors(pointerSensor);
-  const pdfUtil = usePDFUtil(pdf);
 
   useEffect(() => {
     const getOutline = async () => {
@@ -102,11 +103,20 @@ export default function PDFLayout(props: PDFLayoutProps) {
       <div className="grid grid-cols-12 h-svh gap-2 bg-black">
         {/* Sidebar */}
         <aside className="col-span-2 overflow-y-scroll p-2 bg-white">
-          {outline.length > 0 ? (
-            <OutlineRenderer items={outline} onNavigate={outlineScrollToPage} />
-          ) : (
-            <p className="text-gray-500 text-sm">Outline Unavailable</p>
-          )}
+          <Conditional
+            check={outline.length > 0}
+            ifShow={
+              <OutlineRenderer
+                items={outline}
+                onNavigate={outlineScrollToPage}
+              />
+            }
+            elseShow={
+              <p className="text-gray-500 text-sm">
+                Outline Unavailable, show thumbnail
+              </p>
+            }
+          />
         </aside>
 
         {/* PDF Content */}
@@ -159,16 +169,17 @@ function OutlineDragOverlay(props: {
 }) {
   return (
     <DragOverlay dropAnimation={null}>
-      {props.activeDragItem ? (
-        <div className="px-4 py-2 bg-white text-black rounded-md shadow-lg pointer-events-none transition-all duration-150 ease-in-out">
-          <div>
-            {props.activeDragItem.isCurrentItemLeaf ? "File" : "Folder"}
-          </div>
-          <span className="text-sm">
-            {props.activeDragItem.currentItem.title}
-          </span>
-        </div>
-      ) : null}
+      <Conditional
+        check={props.activeDragItem}
+        ifShow={(data) => {
+          return (
+            <div className="px-4 py-2 bg-white text-black rounded-md shadow-lg pointer-events-none transition-all duration-150 ease-in-out">
+              <div>{data.isCurrentItemLeaf ? "File" : "Folder"}</div>
+              <span className="text-sm">{data.currentItem.title}</span>
+            </div>
+          );
+        }}
+      />
     </DragOverlay>
   );
 }

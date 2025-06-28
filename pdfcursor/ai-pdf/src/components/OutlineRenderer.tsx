@@ -1,6 +1,7 @@
 import React from "react";
 import { DraggableItemDataType, OutlineItem } from "@/models/OutlineItem";
 import { useDraggable } from "@dnd-kit/core";
+import { Conditional } from "@/components/ConditionalRenderer";
 
 interface OutlineRendererPropType {
   items: OutlineItem[];
@@ -15,7 +16,7 @@ function OutlineRenderer(props: OutlineRendererPropType) {
     <ul className="pl-1.5 text-sm text-gray-700">
       {items.map((item) => {
         const currNext = items.findIndex((it) => it.title == item.title);
-        let cNextSiblingItem: OutlineItem | undefined = undefined;
+        let cNextSiblingItem: OutlineItem | undefined;
 
         if (currNext != -1 && currNext + 1 < items.length) {
           cNextSiblingItem = items[currNext + 1];
@@ -70,13 +71,16 @@ function DraggableOutlineItem(props: {
       >
         {item.title}
       </button>
-      {item.items?.length > 0 && (
-        <OutlineRenderer
-          items={item.items}
-          onNavigate={onNavigate}
-          nextSiblingItem={nextSiblingItem}
-        />
-      )}
+      <Conditional
+        check={item.items?.length > 0}
+        ifShow={
+          <OutlineRenderer
+            items={item.items}
+            onNavigate={onNavigate}
+            nextSiblingItem={nextSiblingItem}
+          />
+        }
+      />
     </li>
   );
 }
