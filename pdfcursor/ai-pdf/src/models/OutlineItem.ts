@@ -3,3 +3,9 @@ export interface OutlineItem {
   title: string;
   items: OutlineItem[];
 }
+
+export interface DraggableItemDataType {
+  currentItem: OutlineItem;
+  nextSiblingItem?: OutlineItem;
+  isCurrentItemLeaf: boolean;
+}

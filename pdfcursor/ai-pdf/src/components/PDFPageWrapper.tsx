@@ -4,7 +4,7 @@ import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 
 export default function PDFPageWrapper(props: {
   pageNumber: number;
-  pageChangeListener: (pageNumber: number, ratio: number) => void;
+  pageChangeListener: (pageNumber: number) => void;
 }) {
   const { pageChangeListener, pageNumber } = props;
   const ref = useRef(null);
@@ -17,7 +17,7 @@ export default function PDFPageWrapper(props: {
           entry.isIntersecting &&
           entry.intersectionRatio > PAGE_VISIBILITY_THRESHOLD
         ) {
-          pageChangeListener(pageNumber, entry.intersectionRatio);
+          pageChangeListener(pageNumber);
         }
       },
       {
