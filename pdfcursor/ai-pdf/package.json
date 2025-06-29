@@ -21,6 +21,8 @@
     "react-markdown": "^10.1.0",
     "react-pdf": "^9.2.1",
     "react-virtuoso": "^4.12.8",
+    "remark-gfm": "^4.0.1",
+    "remark-sugar-high": "^0.6.0",
     "zod": "^3.25.64"
   },
   "devDependencies": {

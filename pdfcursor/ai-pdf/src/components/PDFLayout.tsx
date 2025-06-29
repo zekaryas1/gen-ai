@@ -6,7 +6,6 @@ import { usePDFUtil } from "@/utils/page.utils";
 import {
   DndContext,
   DragEndEvent,
-  DragOverlay,
   DragStartEvent,
   PointerSensor,
   useSensor,
@@ -16,8 +15,9 @@ import OutlineRenderer from "@/components/OutlineRenderer";
 import Toolbar from "@/components/Toolbar";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 import PDFPageWrapper from "@/components/PDFPageWrapper";
-import ChatInterface from "@/components/ChatInterface";
+import ChatInterface from "@/components/chat/ChatInterface";
 import { Conditional } from "@/components/ConditionalRenderer";
+import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -146,7 +146,7 @@ export default function PDFLayout(props: PDFLayoutProps) {
         {/* Chat Box */}
         <aside className="col-span-3 bg-white overflow-hidden">
           <ChatInterface
-            droppedOutlineItem={droppedItemData}
+            droppedOutlineItems={droppedItemData}
             getContext={getTextContext}
             onClearContextClick={() => {
               pdfUtil.clearVisitedPages();
@@ -158,28 +158,8 @@ export default function PDFLayout(props: PDFLayoutProps) {
           />
         </aside>
 
-        <OutlineDragOverlay activeDragItem={activeDragItem} />
+        <OutlineItemDragOverlay activeDragItem={activeDragItem} />
       </div>
     </DndContext>
-  );
-}
-
-function OutlineDragOverlay(props: {
-  activeDragItem: DraggableItemDataType | null;
-}) {
-  return (
-    <DragOverlay dropAnimation={null}>
-      <Conditional
-        check={props.activeDragItem}
-        ifShow={(data) => {
-          return (
-            <div className="px-4 py-2 bg-white text-black rounded-md shadow-lg pointer-events-none transition-all duration-150 ease-in-out">
-              <div>{data.isCurrentItemLeaf ? "File" : "Folder"}</div>
-              <span className="text-sm">{data.currentItem.title}</span>
-            </div>
-          );
-        }}
-      />
-    </DragOverlay>
   );
 }
