@@ -1,6 +1,12 @@
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { DraggableItemDataType, OutlineItem } from "@/models/OutlineItem";
-import { RefObject, useCallback, useEffect, useState } from "react";
+import {
+  RefObject,
+  startTransition,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { usePDFUtil } from "@/utils/page.utils";
 import {
@@ -18,17 +24,21 @@ import PDFPageWrapper from "@/components/PDFPageWrapper";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { Conditional } from "@/components/ConditionalRenderer";
 import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
+import { saveHistory, saveLastVisitedPage } from "@/utils/files.utils";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
   virtuosoRef: RefObject<VirtuosoHandle | null>;
+  fileName: string;
+  lastPagePosition: number;
 }
 
 export default function PDFLayout(props: PDFLayoutProps) {
-  const { pdf, virtuosoRef } = props;
+  const { pdf, virtuosoRef, fileName, lastPagePosition } = props;
+
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
-  const [outline, setOutline] = useState<OutlineItem[]>([]);
   const pdfUtil = usePDFUtil(pdf);
+  const [outlines, setOutlines] = useState<OutlineItem[]>([]);
 
   //drag and drop conf
   const [droppedItemData, setDroppedItemData] = useState<
@@ -45,11 +55,14 @@ export default function PDFLayout(props: PDFLayoutProps) {
 
   useEffect(() => {
     const getOutline = async () => {
-      const pdfOutline = await pdf.getOutline();
-      setOutline(pdfOutline);
+      const outline = pdf ? await pdf.getOutline() : [];
+      startTransition(() => {
+        setOutlines(outline || []);
+      });
     };
+    saveHistory(pdf, fileName);
     getOutline();
-  }, []);
+  }, [fileName, pdf]);
 
   const outlineScrollToPage = useCallback(
     async (item: OutlineItem) => {
@@ -82,17 +95,22 @@ export default function PDFLayout(props: PDFLayoutProps) {
     setActiveDragItem(null); // Reset the active drag item state
   };
 
-  const handleRemoveDroppedItem = (item: DraggableItemDataType) => {
+  const handleRemoveDroppedItem = useCallback((item: DraggableItemDataType) => {
     setDroppedItemData((prev) =>
       prev.filter((it) => it.currentItem.title !== item.currentItem.title),
     );
-  };
+  }, []);
 
-  const getTextContext = async () => {
+  const getTextContext = useCallback(async () => {
     const outlinePages =
       await pdfUtil.outlineItemsToPageConverter(droppedItemData);
     return await pdfUtil.getTextContext([...outlinePages, currentPageNumber]);
-  };
+  }, [currentPageNumber, droppedItemData, pdfUtil]);
+
+  const chatClearHistory = useCallback(() => {
+    pdfUtil.clearVisitedPages();
+    setDroppedItemData([]);
+  }, [pdfUtil]);
 
   return (
     <DndContext
@@ -104,10 +122,10 @@ export default function PDFLayout(props: PDFLayoutProps) {
         {/* Sidebar */}
         <aside className="col-span-2 overflow-y-scroll p-2 bg-white">
           <Conditional
-            check={outline.length > 0}
+            check={outlines.length > 0}
             ifShow={
               <OutlineRenderer
-                items={outline}
+                items={outlines}
                 onNavigate={outlineScrollToPage}
               />
             }
@@ -132,11 +150,15 @@ export default function PDFLayout(props: PDFLayoutProps) {
             components={{
               ScrollSeekPlaceholder: ScrollPlaceHolder,
             }}
+            initialTopMostItemIndex={
+              lastPagePosition > 0 ? lastPagePosition - 1 : lastPagePosition
+            }
             itemContent={(index) => (
               <PDFPageWrapper
                 pageNumber={index + 1}
                 pageChangeListener={(pageNumber) => {
                   setCurrentPageNumber(pageNumber);
+                  saveLastVisitedPage(fileName, currentPageNumber);
                 }}
               />
             )}
@@ -148,13 +170,8 @@ export default function PDFLayout(props: PDFLayoutProps) {
           <ChatInterface
             droppedOutlineItems={droppedItemData}
             getContext={getTextContext}
-            onClearContextClick={() => {
-              pdfUtil.clearVisitedPages();
-              setDroppedItemData([]);
-            }}
-            onRemoveOutlineItemClick={(item) => {
-              handleRemoveDroppedItem(item);
-            }}
+            onClearContextClick={chatClearHistory}
+            onRemoveOutlineItemClick={handleRemoveDroppedItem}
           />
         </aside>
 
