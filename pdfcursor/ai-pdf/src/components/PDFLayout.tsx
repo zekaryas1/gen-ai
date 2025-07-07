@@ -1,22 +1,8 @@
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { DraggableItemDataType, OutlineItem } from "@/models/OutlineItem";
-import {
-  RefObject,
-  startTransition,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { RefObject, useCallback, useState } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { usePDFUtil } from "@/utils/page.utils";
-import {
-  DndContext,
-  DragEndEvent,
-  DragStartEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
 import OutlineRenderer from "@/components/OutlineRenderer";
 import Toolbar from "@/components/Toolbar";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
@@ -24,21 +10,29 @@ import PDFPageWrapper from "@/components/PDFPageWrapper";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { Conditional } from "@/components/ConditionalRenderer";
 import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
-import { saveHistory, saveLastVisitedPage } from "@/utils/files.utils";
+import { pdfjs } from "react-pdf";
+import DndWrapper from "@/components/DndWrapper";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
   virtuosoRef: RefObject<VirtuosoHandle | null>;
   fileName: string;
   lastPagePosition: number;
+  inOutline: OutlineItem[];
+  saveLastVisitedPage: (newPage: number) => void;
 }
 
-export default function PDFLayout(props: PDFLayoutProps) {
-  const { pdf, virtuosoRef, fileName, lastPagePosition } = props;
+// Worker setup
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url,
+).toString();
 
+export default function PDFLayout(props: PDFLayoutProps) {
+  const { pdf, virtuosoRef, saveLastVisitedPage, lastPagePosition, inOutline } =
+    props;
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
   const pdfUtil = usePDFUtil(pdf);
-  const [outlines, setOutlines] = useState<OutlineItem[]>([]);
 
   //drag and drop conf
   const [droppedItemData, setDroppedItemData] = useState<
@@ -46,23 +40,6 @@ export default function PDFLayout(props: PDFLayoutProps) {
   >([]);
   const [activeDragItem, setActiveDragItem] =
     useState<DraggableItemDataType | null>(null);
-  const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 5, // Drag starts after pointer moves 5 pixels
-    },
-  });
-  const sensors = useSensors(pointerSensor);
-
-  useEffect(() => {
-    const getOutline = async () => {
-      const outline = pdf ? await pdf.getOutline() : [];
-      startTransition(() => {
-        setOutlines(outline || []);
-      });
-    };
-    saveHistory(pdf, fileName);
-    getOutline();
-  }, [fileName, pdf]);
 
   const outlineScrollToPage = useCallback(
     async (item: OutlineItem) => {
@@ -72,28 +49,22 @@ export default function PDFLayout(props: PDFLayoutProps) {
     [pdfUtil, virtuosoRef],
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveDragItem(event.active.data.current as DraggableItemDataType);
-  };
+  const handleDragStart = useCallback((item: DraggableItemDataType) => {
+    setActiveDragItem(item);
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    // Check if an item was dropped over the specific form field droppable area
-    if (over && over.id === "droppable") {
-      const draggedItemData = active.data.current;
-      if (draggedItemData) {
-        const newItem = draggedItemData as DraggableItemDataType;
-        const existsPrevious = droppedItemData.findIndex(
-          (it) => it.currentItem.title === newItem.currentItem.title,
-        );
-        if (existsPrevious == -1) {
-          setDroppedItemData([newItem, ...droppedItemData]);
-        }
+  const handleDragEnd = useCallback(
+    (item: DraggableItemDataType) => {
+      const existsPrevious = droppedItemData.findIndex(
+        (it) => it.currentItem.title === item.currentItem.title,
+      );
+      if (existsPrevious == -1) {
+        setDroppedItemData([item, ...droppedItemData]);
       }
-    }
-    setActiveDragItem(null); // Reset the active drag item state
-  };
+      setActiveDragItem(null);
+    },
+    [droppedItemData],
+  );
 
   const handleRemoveDroppedItem = useCallback((item: DraggableItemDataType) => {
     setDroppedItemData((prev) =>
@@ -112,20 +83,24 @@ export default function PDFLayout(props: PDFLayoutProps) {
     setDroppedItemData([]);
   }, [pdfUtil]);
 
+  const handlePageChange = useCallback(
+    (pageNumber: number) => {
+      saveLastVisitedPage(pageNumber);
+      setCurrentPageNumber(pageNumber);
+    },
+    [saveLastVisitedPage],
+  );
+
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      sensors={sensors}
-    >
+    <DndWrapper onItemDragStart={handleDragStart} onItemDragEnd={handleDragEnd}>
       <div className="grid grid-cols-12 h-svh gap-2 bg-black">
         {/* Sidebar */}
         <aside className="col-span-2 overflow-y-scroll p-2 bg-white">
           <Conditional
-            check={outlines.length > 0}
+            check={inOutline.length > 0}
             ifShow={
               <OutlineRenderer
-                items={outlines}
+                items={inOutline}
                 onNavigate={outlineScrollToPage}
               />
             }
@@ -150,16 +125,11 @@ export default function PDFLayout(props: PDFLayoutProps) {
             components={{
               ScrollSeekPlaceholder: ScrollPlaceHolder,
             }}
-            initialTopMostItemIndex={
-              lastPagePosition > 0 ? lastPagePosition - 1 : lastPagePosition
-            }
+            initialTopMostItemIndex={Math.max(0, lastPagePosition - 1)}
             itemContent={(index) => (
               <PDFPageWrapper
                 pageNumber={index + 1}
-                pageChangeListener={(pageNumber) => {
-                  setCurrentPageNumber(pageNumber);
-                  saveLastVisitedPage(fileName, currentPageNumber);
-                }}
+                pageChangeListener={handlePageChange}
               />
             )}
           />
@@ -177,6 +147,6 @@ export default function PDFLayout(props: PDFLayoutProps) {
 
         <OutlineItemDragOverlay activeDragItem={activeDragItem} />
       </div>
-    </DndContext>
+    </DndWrapper>
   );
 }

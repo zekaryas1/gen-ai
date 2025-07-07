@@ -1,5 +1,7 @@
 import { PDFDocumentProxy } from "pdfjs-dist";
 
+const STORAGE_LIMIT = 7;
+
 export interface LocalPrevFileType {
   title: string;
   fileName: string;
@@ -39,51 +41,40 @@ export const getPdfPageThumbnail = async (pdf: PDFDocumentProxy) => {
       return canvas.toDataURL("image/png"); // Get thumbnail as Data URL
     }
   }
-  return "";
+  return "/document.png";
 };
 
 export const saveHistory = async (pdf: PDFDocumentProxy, fileName: string) => {
-  try {
-    // Get PDF metadata with proper error handling
-    const meta: {
+  if (pdf && fileName) {
+    const metadata: {
       info?: {
         Author?: string;
         Title?: string;
       };
     } = await pdf.getMetadata().catch(() => ({}));
-
-    const PrevFileStorageLimit = 7;
-
+    const { Author = "", Title = "" } = metadata.info || {};
+    const title = Title || fileName;
     const thumbnail = await getPdfPageThumbnail(pdf);
 
-    const { Author = "", Title = "" } = meta.info || {};
+    const prevFiles: LocalPrevFileType[] = getLimitedPrevFiles(STORAGE_LIMIT);
+    const existingFile = prevFiles.find((file) => file.title === title);
 
-    const title = Title || fileName;
+    const updatedFile: LocalPrevFileType = existingFile
+      ? { ...existingFile }
+      : {
+          title,
+          fileName,
+          author: Author,
+          thumbnail,
+          lastVisitedPage: 1,
+        };
 
-    const prevFiles: LocalPrevFileType[] =
-      getLimitedPrevFiles(PrevFileStorageLimit);
-
-    let prevFile = prevFiles.find((it) => it.title === title);
-    let updatedFiles: LocalPrevFileType[] = [];
-    if (!prevFile) {
-      prevFile = {
-        title: title,
-        fileName: fileName,
-        author: Author,
-        thumbnail: thumbnail,
-        lastVisitedPage: 0,
-      };
-    }
-    updatedFiles = [
-      { ...prevFile },
+    const updatedFiles: LocalPrevFileType[] = [
+      updatedFile,
       ...prevFiles.filter((file) => file.title !== title),
-    ].slice(0, PrevFileStorageLimit); // Ensure we never exceed limit
+    ].slice(0, STORAGE_LIMIT);
 
     localStorage.setItem("prevFiles", JSON.stringify(updatedFiles));
-
-    return prevFile;
-  } catch (error) {
-    console.error("Failed to save PDF history:", error);
   }
 };
 
@@ -92,17 +83,19 @@ export const getLastVisitedPage = (fileName: string) => {
   const parsed: LocalPrevFileType[] = stored ? JSON.parse(stored) : [];
   const history = parsed.find((it) => it.fileName == fileName);
 
-  return history ? history.lastVisitedPage : 0;
+  return history ? history.lastVisitedPage : 1;
 };
 
 export const saveLastVisitedPage = (fileName: string, pageNumber: number) => {
-  const stored = localStorage.getItem("prevFiles");
-  const parsed: LocalPrevFileType[] = stored ? JSON.parse(stored) : [];
+  if (fileName) {
+    const stored = localStorage.getItem("prevFiles");
+    const parsed: LocalPrevFileType[] = stored ? JSON.parse(stored) : [];
 
-  const index = parsed.findIndex((it) => it.fileName == fileName);
-  if (index != -1) {
-    parsed[index].lastVisitedPage = pageNumber;
-    localStorage.setItem("prevFiles", JSON.stringify(parsed));
+    const index = parsed.findIndex((it) => it.fileName == fileName);
+    if (index != -1) {
+      parsed[index].lastVisitedPage = pageNumber;
+      localStorage.setItem("prevFiles", JSON.stringify(parsed));
+    }
   }
 };
 
