@@ -1,105 +1,160 @@
 import { PDFDocumentProxy } from "pdfjs-dist";
+import {
+  PREVIOUS_FILES_STORAGE_KEY,
+  PREVIOUS_FILES_STORAGE_LIMIT,
+} from "@/utils/constants.utils";
+import { LocalStorageFile } from "@/models/File";
 
-const STORAGE_LIMIT = 7;
+class PdfUtilityManager {
+  private readonly storageKey: string;
+  private readonly storageLimit: number;
 
-export interface LocalPrevFileType {
-  title: string;
-  fileName: string;
-  author: string;
-  thumbnail: string;
-  lastVisitedPage: number;
-}
-
-// Helper function to clean filename (remove .pdf extension)
-export const cleanFileName = (filename: string): string => {
-  return filename.endsWith(".pdf") ? filename.slice(0, -4) : filename;
-};
-
-// Helper function to get and limit previous files
-export const getLimitedPrevFiles = (limit: number): LocalPrevFileType[] => {
-  try {
-    const stored = localStorage.getItem("prevFiles");
-    const parsed: LocalPrevFileType[] = stored ? JSON.parse(stored) : [];
-    return parsed.slice(0, limit);
-  } catch {
-    return [];
+  constructor(storageKey: string, storageLimit: number) {
+    this.storageKey = storageKey;
+    this.storageLimit = storageLimit;
   }
-};
 
-export const getPdfPageThumbnail = async (pdf: PDFDocumentProxy) => {
-  if (pdf.numPages > 0) {
-    const page = await pdf.getPage(1); // Get the first page
-    const viewport = page.getViewport({ scale: 0.5 }); // Adjust scale for thumbnail size
-    const canvas = document.createElement("canvas");
-    const canvasContext = canvas.getContext("2d");
+  public cleanFileName(filename: string): string {
+    return filename.endsWith(".pdf") ? filename.slice(0, -4) : filename;
+  }
 
-    if (canvasContext) {
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+  public async getPdfPageThumbnail(pdf: PDFDocumentProxy): Promise<string> {
+    if (pdf.numPages > 0) {
+      try {
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 0.5 });
+        const canvas = document.createElement("canvas");
+        const canvasContext = canvas.getContext("2d");
 
-      await page.render({ canvasContext, viewport }).promise;
-      return canvas.toDataURL("image/png"); // Get thumbnail as Data URL
+        if (canvasContext) {
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          await page.render({ canvasContext, viewport }).promise;
+          return canvas.toDataURL("image/png");
+        }
+      } catch (error) {
+        console.error("Error generating PDF thumbnail:", error);
+      }
+    }
+    return "/document.png"; // Fallback image path
+  }
+
+  public getPreviousFiles(): LocalStorageFile[] {
+    try {
+      const preFilesString = localStorage.getItem(this.storageKey);
+      return preFilesString ? JSON.parse(preFilesString) : [];
+    } catch (error) {
+      console.error("Error parsing previous files from localStorage:", error);
+      return [];
     }
   }
-  return "/document.png";
-};
 
-export const saveHistory = async (pdf: PDFDocumentProxy, fileName: string) => {
-  if (pdf && fileName) {
+  /**
+   * Saves or updates a PDF file entry in the Browse history.
+   * This includes extracting metadata, generating a thumbnail, and managing the history limit.
+   * If an entry with the same title exists, it's updated and moved to the front.
+   * @param pdf The PDFDocumentProxy instance of the opened PDF.
+   * @param fileName The original file name of the PDF.
+   */
+  public async saveInitialHistory(
+    pdf: PDFDocumentProxy,
+    fileName: string,
+  ): Promise<void> {
+    if (!pdf || !fileName) {
+      console.warn(
+        "Cannot save history: PDF document or file name is missing.",
+      );
+      return;
+    }
+
     const metadata: {
       info?: {
         Author?: string;
         Title?: string;
       };
-    } = await pdf.getMetadata().catch(() => ({}));
-    const { Author = "", Title = "" } = metadata.info || {};
-    const title = Title || fileName;
-    const thumbnail = await getPdfPageThumbnail(pdf);
+    } = await pdf.getMetadata().catch((err) => {
+      console.warn("Could not retrieve PDF metadata:", err);
+      return {}; // Return empty object on metadata retrieval error
+    });
 
-    const prevFiles: LocalPrevFileType[] = getLimitedPrevFiles(STORAGE_LIMIT);
-    const existingFile = prevFiles.find((file) => file.title === title);
+    const { Author = "Unknown Author", Title = "" } = metadata.info || {};
+    const historyTitle = Title || this.cleanFileName(fileName);
 
-    const updatedFile: LocalPrevFileType = existingFile
-      ? { ...existingFile }
-      : {
-          title,
-          fileName,
-          author: Author,
-          thumbnail,
-          lastVisitedPage: 1,
-        };
+    const prevFiles: LocalStorageFile[] = this.getPreviousFiles();
+    const existingFileIndex = prevFiles.findIndex(
+      (file) => file.title === historyTitle,
+    );
 
-    const updatedFiles: LocalPrevFileType[] = [
-      updatedFile,
-      ...prevFiles.filter((file) => file.title !== title),
-    ].slice(0, STORAGE_LIMIT);
+    let updatedFile: LocalStorageFile;
 
-    localStorage.setItem("prevFiles", JSON.stringify(updatedFiles));
-  }
-};
+    if (existingFileIndex !== -1) {
+      // Update existing entry, keep its lastVisitedPage if it exists
+      updatedFile = {
+        ...prevFiles[existingFileIndex],
+        fileName, // Ensure fileName is updated if it changed (e.g., user renamed it)
+        lastOpenedDate: Date.now(),
+      };
+      // Remove old entry, so it can be re-added at the top
+      prevFiles.splice(existingFileIndex, 1);
+    } else {
+      // Create new entry
+      updatedFile = {
+        title: historyTitle,
+        fileName,
+        author: Author,
+        thumbnail: await this.getPdfPageThumbnail(pdf),
+        lastVisitedPage: 1, // New entries start at page 1
+        lastOpenedDate: Date.now(),
+      };
+    }
 
-export const getLastVisitedPage = (fileName: string) => {
-  const stored = localStorage.getItem("prevFiles");
-  const parsed: LocalPrevFileType[] = stored ? JSON.parse(stored) : [];
-  const history = parsed.find((it) => it.fileName == fileName);
+    const updatedFiles: LocalStorageFile[] = [updatedFile, ...prevFiles].slice(
+      0,
+      this.storageLimit,
+    ); // Enforce limit
 
-  return history ? history.lastVisitedPage : 1;
-};
-
-export const saveLastVisitedPage = (fileName: string, pageNumber: number) => {
-  if (fileName) {
-    const stored = localStorage.getItem("prevFiles");
-    const parsed: LocalPrevFileType[] = stored ? JSON.parse(stored) : [];
-
-    const index = parsed.findIndex((it) => it.fileName == fileName);
-    if (index != -1) {
-      parsed[index].lastVisitedPage = pageNumber;
-      localStorage.setItem("prevFiles", JSON.stringify(parsed));
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(updatedFiles));
+    } catch (error) {
+      console.error("Error saving PDF history to localStorage:", error);
     }
   }
-};
 
-export const getPreviousFiles = () => {
-  const preFilesString = localStorage.getItem("prevFiles");
-  return preFilesString ? JSON.parse(preFilesString) : [];
-};
+  public getLastVisitedPage(fileName: string): number {
+    const prevFiles: LocalStorageFile[] = this.getPreviousFiles();
+    const history = prevFiles.find((it) => it.fileName === fileName);
+    return history ? history.lastVisitedPage : 1;
+  }
+
+  public updateLastVisitedPage(fileName: string, pageNumber: number): void {
+    if (!fileName || pageNumber <= 0) {
+      console.warn("Invalid file name or page number for update.");
+      return;
+    }
+
+    const prevFiles: LocalStorageFile[] = this.getPreviousFiles();
+    const index = prevFiles.findIndex((it) => it.fileName === fileName);
+
+    if (index !== -1) {
+      prevFiles[index].lastVisitedPage = pageNumber;
+      try {
+        localStorage.setItem(this.storageKey, JSON.stringify(prevFiles));
+      } catch (error) {
+        console.error(
+          "Error updating last visited page in localStorage:",
+          error,
+        );
+      }
+    } else {
+      console.warn(
+        `File '${fileName}' not found in history to update last visited page.`,
+      );
+    }
+  }
+}
+
+export const pdfUtilityManager = new PdfUtilityManager(
+  PREVIOUS_FILES_STORAGE_KEY,
+  PREVIOUS_FILES_STORAGE_LIMIT,
+);

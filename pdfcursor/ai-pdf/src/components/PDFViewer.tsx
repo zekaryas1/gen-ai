@@ -2,16 +2,11 @@ import { useCallback, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { VirtuosoHandle } from "react-virtuoso";
 import { OutlineItem } from "@/models/OutlineItem";
-import {
-  cleanFileName,
-  getLastVisitedPage,
-  saveHistory,
-  saveLastVisitedPage,
-} from "@/utils/files.utils";
 import { Document } from "react-pdf";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 import { Conditional } from "@/components/ConditionalRenderer";
 import PDFLayout from "@/components/PDFLayout";
+import { pdfUtilityManager } from "@/utils/files.utils";
 
 interface PDFViewerPropsType {
   file: File;
@@ -24,20 +19,20 @@ export default function PDFViewer(props: PDFViewerPropsType) {
   const fileNameRef = useRef<string>("");
   const outlineRef = useRef<OutlineItem[]>([]);
   const lastPagePositionRef = useRef<number>(1);
-
   const [pdfReady, setPdfReady] = useState(false);
 
   const handleLoadSuccess = useCallback(
     async (doc: PDFDocumentProxy) => {
-      const fileName = cleanFileName(file.name);
+      const fileName = pdfUtilityManager.cleanFileName(file.name);
 
       outlineRef.current = (await doc.getOutline()) || [];
       pdfRef.current = doc;
       fileNameRef.current = fileName;
-      lastPagePositionRef.current = getLastVisitedPage(fileName);
+      lastPagePositionRef.current =
+        pdfUtilityManager.getLastVisitedPage(fileName);
 
       setPdfReady(true);
-      await saveHistory(doc, fileName);
+      await pdfUtilityManager.saveInitialHistory(doc, fileName);
     },
     [file.name],
   );
@@ -49,8 +44,8 @@ export default function PDFViewer(props: PDFViewerPropsType) {
     [],
   );
 
-  const handleSaveLastVisitedPage = useCallback((newPage: number) => {
-    saveLastVisitedPage(fileNameRef.current, newPage);
+  const handleUpdateLastVisitedPage = useCallback((newPage: number) => {
+    pdfUtilityManager.updateLastVisitedPage(fileNameRef.current, newPage);
   }, []);
 
   return (
@@ -70,7 +65,7 @@ export default function PDFViewer(props: PDFViewerPropsType) {
             fileName={fileNameRef.current}
             lastPagePosition={lastPagePositionRef.current}
             inOutline={outlineRef.current}
-            saveLastVisitedPage={handleSaveLastVisitedPage}
+            updateLastVisitedPage={handleUpdateLastVisitedPage}
           />
         }
       />

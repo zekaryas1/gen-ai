@@ -10,19 +10,20 @@ import {
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { Conditional } from "@/components/ConditionalRenderer";
-import { getPreviousFiles, LocalPrevFileType } from "@/utils/files.utils";
 import FileSelector from "@/components/FileSelector";
 import PreviousFiles from "@/components/PreviousFiles";
 import PDFViewer from "@/components/PDFViewer";
+import { pdfUtilityManager } from "@/utils/files.utils";
+import { LocalStorageFile } from "@/models/File";
 
 export default function Home() {
   const fileRef = useRef<File>(null);
   const [showPDF, setShowPDF] = useState(false);
-  const [prevFiles, setPrevFiles] = useState<LocalPrevFileType[]>([]);
+  const [prevFiles, setPrevFiles] = useState<LocalStorageFile[]>([]);
 
   useEffect(() => {
     startTransition(() => {
-      setPrevFiles(getPreviousFiles());
+      setPrevFiles(pdfUtilityManager.getPreviousFiles());
     });
   }, [showPDF]);
 
