@@ -1,32 +1,47 @@
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { Ref } from "@/models/Ref";
-import { DraggableItemDataType, OutlineItem } from "@/models/OutlineItem";
-import { useState } from "react";
+import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
 
-export const usePDFUtil = (pdf: PDFDocumentProxy) => {
-  const [visitedPages, setVisitedPages] = useState<Set<number>>(new Set());
+export class PagesUtilityManager {
+  private pdf: PDFDocumentProxy;
+  private readonly visitedPages: Set<number>;
 
-  const clearVisitedPages = () => {
-    setVisitedPages(new Set());
-  };
+  constructor(pdfDocument: PDFDocumentProxy) {
+    this.pdf = pdfDocument;
+    this.visitedPages = new Set<number>();
+  }
 
-  const getDestination = (item: OutlineItem) => {
+  public clearVisitedPages(): void {
+    this.visitedPages.clear();
+  }
+
+  /**
+   * Retrieves the destination object for a given outline item.
+   * @param item The outline item.
+   * @returns A Promise resolving to the destination object.
+   */
+  private async getDestination(item: OutlineItem) {
     return typeof item.dest === "string"
-      ? pdf.getDestination(item.dest)
+      ? this.pdf.getDestination(item.dest)
       : item.dest;
-  };
+  }
 
-  const getPageIndex = async (item: OutlineItem) => {
-    const dest = await getDestination(item);
+  public async getOutlineItemPageNumber(item: OutlineItem) {
+    const dest = await this.getDestination(item);
     if (!dest) throw new Error("Destination not found.");
 
     const [ref] = dest as [Ref];
-    return pdf.getPageIndex(new Ref(ref));
-  };
+    return this.pdf.getPageIndex(new Ref(ref));
+  }
 
-  const getPageTexts = async (pageNumber: number): Promise<string[]> => {
-    const currentPage = await pdf.getPage(pageNumber);
-    if (currentPage) {
+  /**
+   * Extracts text content from a specific page.
+   * @param pageNumber The page number.
+   * @returns A Promise resolving to an array of text strings from the page.
+   */
+  private async getPageTexts(pageNumber: number): Promise<string[]> {
+    try {
+      const currentPage = await this.pdf.getPage(pageNumber);
       const textContent = await currentPage.getTextContent();
       return textContent.items.map((item) => {
         if ("str" in item) {
@@ -34,19 +49,26 @@ export const usePDFUtil = (pdf: PDFDocumentProxy) => {
         }
         return "";
       });
+    } catch (error) {
+      console.error(`Error getting text for page ${pageNumber}:`, error);
+      return [];
     }
-    return [];
-  };
+  }
 
-  const outlineItemsToPageConverter = async (
-    items: DraggableItemDataType[],
-  ) => {
+  /**
+   * Converts a list of draggable outline items into a set of unique page numbers to scan.
+   * @param items An array of DraggableOutlineItemData.
+   * @returns A Promise resolving to a Set of page numbers.
+   */
+  public async outlineItemsToPageConverter(
+    items: DraggableOutlineItemData[],
+  ): Promise<Set<number>> {
     const pageRangePromises = items.map(
       async ({ currentItem, nextSiblingItem }) => {
-        const start = await getPageIndex(currentItem);
+        const start = (await this.getOutlineItemPageNumber(currentItem)) + 1;
         const end = nextSiblingItem
-          ? await getPageIndex(nextSiblingItem)
-          : pdf.numPages;
+          ? await this.getOutlineItemPageNumber(nextSiblingItem)
+          : this.pdf.numPages;
         return [start, end];
       },
     );
@@ -64,29 +86,29 @@ export const usePDFUtil = (pdf: PDFDocumentProxy) => {
     }
 
     return pagesToFetch;
-  };
+  }
 
-  const getTextContext = async (pagesToScan: number[]) => {
-    // Filter out visited pages
+  /**
+   * Fetches and concatenates text content from a list of pages, avoiding previously visited pages.
+   * Marks new pages as visited.
+   * @param pagesToScan An array of page numbers to scan.
+   * @returns A Promise resolving to a single string containing concatenated text.
+   */
+  public async getTextContext(pagesToScan: number[]): Promise<string> {
     const newPages = Array.from(pagesToScan).filter(
-      (page) => !visitedPages.has(page),
+      (page) => !this.visitedPages.has(page),
     );
 
-    setVisitedPages(new Set([...visitedPages, ...newPages]));
+    newPages.forEach((page) => {
+      this.visitedPages.add(page);
+    });
 
-    // Sort numerically
     newPages.sort((a, b) => a - b);
 
-    // Fetch and flatten page texts
-    const pageTexts = await Promise.all(newPages.map(getPageTexts));
+    const pageTexts = await Promise.all(
+      newPages.map(this.getPageTexts.bind(this)),
+    );
 
     return pageTexts.flat().join(" ");
-  };
-
-  return {
-    getPageIndex,
-    outlineItemsToPageConverter,
-    getTextContext,
-    clearVisitedPages,
-  };
-};
+  }
+}

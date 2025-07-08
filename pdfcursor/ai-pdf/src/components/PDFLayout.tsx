@@ -1,8 +1,7 @@
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import { DraggableItemDataType, OutlineItem } from "@/models/OutlineItem";
-import { RefObject, useCallback, useState } from "react";
+import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
+import { RefObject, useCallback, useMemo, useState } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import { usePDFUtil } from "@/utils/page.utils";
 import OutlineRenderer from "@/components/OutlineRenderer";
 import Toolbar from "@/components/Toolbar";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
@@ -12,6 +11,7 @@ import { Conditional } from "@/components/ConditionalRenderer";
 import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
 import { pdfjs } from "react-pdf";
 import DndWrapper from "@/components/DndWrapper";
+import { PagesUtilityManager } from "@/utils/page.utils";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -19,7 +19,7 @@ interface PDFLayoutProps {
   fileName: string;
   lastPagePosition: number;
   inOutline: OutlineItem[];
-  saveLastVisitedPage: (newPage: number) => void;
+  updateLastVisitedPage: (newPage: number) => void;
 }
 
 // Worker setup
@@ -29,32 +29,41 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 export default function PDFLayout(props: PDFLayoutProps) {
-  const { pdf, virtuosoRef, saveLastVisitedPage, lastPagePosition, inOutline } =
-    props;
+  const {
+    pdf,
+    virtuosoRef,
+    updateLastVisitedPage,
+    lastPagePosition,
+    inOutline,
+  } = props;
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
-  const pdfUtil = usePDFUtil(pdf);
+  const pagesUtilityManager = useMemo(
+    () => new PagesUtilityManager(pdf),
+    [pdf],
+  );
 
   //drag and drop conf
   const [droppedItemData, setDroppedItemData] = useState<
-    DraggableItemDataType[]
+    DraggableOutlineItemData[]
   >([]);
   const [activeDragItem, setActiveDragItem] =
-    useState<DraggableItemDataType | null>(null);
+    useState<DraggableOutlineItemData | null>(null);
 
   const outlineScrollToPage = useCallback(
     async (item: OutlineItem) => {
-      const pageIndex = await pdfUtil.getPageIndex(item);
+      const pageIndex =
+        await pagesUtilityManager.getOutlineItemPageNumber(item);
       virtuosoRef.current?.scrollToIndex({ index: pageIndex });
     },
-    [pdfUtil, virtuosoRef],
+    [pagesUtilityManager, virtuosoRef],
   );
 
-  const handleDragStart = useCallback((item: DraggableItemDataType) => {
+  const handleDragStart = useCallback((item: DraggableOutlineItemData) => {
     setActiveDragItem(item);
   }, []);
 
   const handleDragEnd = useCallback(
-    (item: DraggableItemDataType) => {
+    (item: DraggableOutlineItemData) => {
       const existsPrevious = droppedItemData.findIndex(
         (it) => it.currentItem.title === item.currentItem.title,
       );
@@ -66,29 +75,35 @@ export default function PDFLayout(props: PDFLayoutProps) {
     [droppedItemData],
   );
 
-  const handleRemoveDroppedItem = useCallback((item: DraggableItemDataType) => {
-    setDroppedItemData((prev) =>
-      prev.filter((it) => it.currentItem.title !== item.currentItem.title),
-    );
-  }, []);
+  const handleRemoveDroppedItem = useCallback(
+    (item: DraggableOutlineItemData) => {
+      setDroppedItemData((prev) =>
+        prev.filter((it) => it.currentItem.title !== item.currentItem.title),
+      );
+    },
+    [],
+  );
 
   const getTextContext = useCallback(async () => {
     const outlinePages =
-      await pdfUtil.outlineItemsToPageConverter(droppedItemData);
-    return await pdfUtil.getTextContext([...outlinePages, currentPageNumber]);
-  }, [currentPageNumber, droppedItemData, pdfUtil]);
+      await pagesUtilityManager.outlineItemsToPageConverter(droppedItemData);
+    return await pagesUtilityManager.getTextContext([
+      ...outlinePages,
+      currentPageNumber,
+    ]);
+  }, [currentPageNumber, droppedItemData, pagesUtilityManager]);
 
   const chatClearHistory = useCallback(() => {
-    pdfUtil.clearVisitedPages();
+    pagesUtilityManager.clearVisitedPages();
     setDroppedItemData([]);
-  }, [pdfUtil]);
+  }, [pagesUtilityManager]);
 
   const handlePageChange = useCallback(
     (pageNumber: number) => {
-      saveLastVisitedPage(pageNumber);
+      updateLastVisitedPage(pageNumber);
       setCurrentPageNumber(pageNumber);
     },
-    [saveLastVisitedPage],
+    [updateLastVisitedPage],
   );
 
   return (
