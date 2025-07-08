@@ -1,7 +1,7 @@
-import { DraggableItemDataType } from "@/models/OutlineItem";
+import { DraggableOutlineItemData } from "@/models/OutlineItem";
 
 interface DroppedOutlineItemListProps {
-  draggableItemDataType: DraggableItemDataType;
+  draggableItemDataType: DraggableOutlineItemData;
   onRemoveOutlineItemClick: () => void;
 }
 

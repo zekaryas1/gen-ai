@@ -1,4 +1,4 @@
-import { DraggableItemDataType } from "@/models/OutlineItem";
+import { DraggableOutlineItemData } from "@/models/OutlineItem";
 import {
   DndContext,
   DragEndEvent,
@@ -10,8 +10,8 @@ import {
 
 interface DndWrapperPropsType {
   children: React.ReactNode;
-  onItemDragStart: (item: DraggableItemDataType) => void;
-  onItemDragEnd: (item: DraggableItemDataType) => void;
+  onItemDragStart: (item: DraggableOutlineItemData) => void;
+  onItemDragEnd: (item: DraggableOutlineItemData) => void;
 }
 
 export default function DndWrapper(props: DndWrapperPropsType) {
@@ -25,7 +25,7 @@ export default function DndWrapper(props: DndWrapperPropsType) {
   const sensors = useSensors(pointerSensor);
 
   const handleDragStart = (event: DragStartEvent) => {
-    const danglingItem = event.active.data.current as DraggableItemDataType;
+    const danglingItem = event.active.data.current as DraggableOutlineItemData;
     onItemDragStart(danglingItem);
   };
 
@@ -36,7 +36,7 @@ export default function DndWrapper(props: DndWrapperPropsType) {
     if (over && over.id === "droppable") {
       const draggedItemData = active.data.current;
       if (draggedItemData) {
-        const draggedItem = draggedItemData as DraggableItemDataType;
+        const draggedItem = draggedItemData as DraggableOutlineItemData;
         onItemDragEnd(draggedItem);
       }
     }

@@ -4,7 +4,7 @@ export interface OutlineItem {
   items: OutlineItem[];
 }
 
-export interface DraggableItemDataType {
+export interface DraggableOutlineItemData {
   currentItem: OutlineItem;
   nextSiblingItem?: OutlineItem;
   isCurrentItemLeaf: boolean;

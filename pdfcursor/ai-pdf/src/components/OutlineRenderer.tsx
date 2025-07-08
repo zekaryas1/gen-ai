@@ -1,5 +1,5 @@
 import React from "react";
-import { DraggableItemDataType, OutlineItem } from "@/models/OutlineItem";
+import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
 import { useDraggable } from "@dnd-kit/core";
 import { Conditional } from "@/components/ConditionalRenderer";
 
@@ -50,7 +50,7 @@ function DraggableOutlineItem(props: {
       currentItem: item,
       nextSiblingItem: nextSiblingItem,
       isCurrentItemLeaf: item.items?.length == 0,
-    } as DraggableItemDataType,
+    } as DraggableOutlineItemData,
   });
 
   return (

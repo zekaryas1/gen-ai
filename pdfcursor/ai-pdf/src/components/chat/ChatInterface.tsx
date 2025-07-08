@@ -1,6 +1,6 @@
 import { useChat } from "@ai-sdk/react";
 import { useDroppable } from "@dnd-kit/core";
-import { DraggableItemDataType } from "@/models/OutlineItem";
+import { DraggableOutlineItemData } from "@/models/OutlineItem";
 import DroppedOutlineItem from "@/components/chat/DroppedOutlineItem";
 import { Conditional } from "@/components/ConditionalRenderer";
 import Message from "@/components/chat/Message";
@@ -9,8 +9,8 @@ import ChatIntroMessage from "@/components/chat/ChatIntro";
 interface ChatInterfaceProps {
   getContext: () => Promise<string>;
   onClearContextClick: () => void;
-  droppedOutlineItems: DraggableItemDataType[];
-  onRemoveOutlineItemClick: (item: DraggableItemDataType) => void;
+  droppedOutlineItems: DraggableOutlineItemData[];
+  onRemoveOutlineItemClick: (item: DraggableOutlineItemData) => void;
 }
 
 export default function ChatInterface(props: ChatInterfaceProps) {

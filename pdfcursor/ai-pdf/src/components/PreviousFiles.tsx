@@ -1,9 +1,9 @@
-import { LocalPrevFileType } from "@/utils/files.utils";
 import { Conditional } from "@/components/ConditionalRenderer";
 import Image from "next/image";
+import { LocalStorageFile } from "@/models/File";
 
 interface PreviousFilesPropsType {
-  prevFiles: LocalPrevFileType[];
+  prevFiles: LocalStorageFile[];
 }
 
 export default function PreviousFiles(props: PreviousFilesPropsType) {

@@ -1,9 +1,9 @@
-import { DraggableItemDataType } from "@/models/OutlineItem";
+import { DraggableOutlineItemData } from "@/models/OutlineItem";
 import { DragOverlay } from "@dnd-kit/core";
 import { Conditional } from "@/components/ConditionalRenderer";
 
 export default function OutlineItemDragOverlay(props: {
-  activeDragItem: DraggableItemDataType | null;
+  activeDragItem: DraggableOutlineItemData | null;
 }) {
   return (
     <DragOverlay dropAnimation={null}>
