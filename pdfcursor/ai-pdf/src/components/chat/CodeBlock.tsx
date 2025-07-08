@@ -15,14 +15,17 @@ export default function CodeBlock(props: CodeBlockProps) {
   };
 
   return (
-    <div className={"border border-gray-200 p-1.5 space-y-1.5"}>
-      <div className={"flex justify-between bg-gray-200 p-3.5"}>
-        <div>{language}</div>
-        <button onClick={() => copyToClipboard()}>copy</button>
+    <>
+      <div className={"flex justify-between mb-2.5"}>
+        <div className={"bg-gray-200 rounded-md p-2"}>{language}</div>
+        <button
+          className={"bg-gray-200 rounded-md p-2"}
+          onClick={() => copyToClipboard()}
+        >
+          copy
+        </button>
       </div>
-      <code ref={ref} className={"break-all"}>
-        {children}
-      </code>
-    </div>
+      <code ref={ref}>{children}</code>
+    </>
   );
 }
