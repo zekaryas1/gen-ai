@@ -1,6 +1,6 @@
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
-import { RefObject, useCallback, useMemo, useState } from "react";
+import { RefObject, useCallback, useContext, useMemo, useState } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import OutlineRenderer from "@/components/OutlineRenderer";
 import Toolbar from "@/components/Toolbar";
@@ -12,13 +12,15 @@ import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
 import { pdfjs } from "react-pdf";
 import DndWrapper from "@/components/DndWrapper";
 import { PagesUtilityManager } from "@/utils/page.utils";
+import { ApiKeyContext } from "@/utils/ApiKeyContext";
+import APIKeyPromptForm from "@/components/chat/APIKeyPromptForm";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
   virtuosoRef: RefObject<VirtuosoHandle | null>;
   fileName: string;
   lastPagePosition: number;
-  inOutline: OutlineItem[];
+  outlines: OutlineItem[];
   updateLastVisitedPage: (newPage: number) => void;
 }
 
@@ -34,20 +36,21 @@ export default function PDFLayout(props: PDFLayoutProps) {
     virtuosoRef,
     updateLastVisitedPage,
     lastPagePosition,
-    inOutline,
+    outlines,
   } = props;
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
   const pagesUtilityManager = useMemo(
     () => new PagesUtilityManager(pdf),
     [pdf],
   );
-
   //drag and drop conf
   const [droppedItemData, setDroppedItemData] = useState<
     DraggableOutlineItemData[]
   >([]);
   const [activeDragItem, setActiveDragItem] =
     useState<DraggableOutlineItemData | null>(null);
+  //api key
+  const value = useContext(ApiKeyContext);
 
   const outlineScrollToPage = useCallback(
     async (item: OutlineItem) => {
@@ -112,10 +115,10 @@ export default function PDFLayout(props: PDFLayoutProps) {
         {/* Sidebar */}
         <aside className="col-span-2 overflow-y-scroll p-2 bg-white">
           <Conditional
-            check={inOutline.length > 0}
+            check={outlines.length > 0}
             ifShow={
               <OutlineRenderer
-                items={inOutline}
+                items={outlines}
                 onNavigate={outlineScrollToPage}
               />
             }
@@ -152,11 +155,22 @@ export default function PDFLayout(props: PDFLayoutProps) {
 
         {/* Chat Box */}
         <aside className="col-span-3 bg-white overflow-hidden">
-          <ChatInterface
-            droppedOutlineItems={droppedItemData}
-            getContext={getTextContext}
-            onClearContextClick={chatClearHistory}
-            onRemoveOutlineItemClick={handleRemoveDroppedItem}
+          <Conditional
+            check={value.apiKey}
+            ifShow={
+              <ChatInterface
+                plainApiKey={value.apiKey}
+                droppedOutlineItems={droppedItemData}
+                getContext={getTextContext}
+                onClearContextClick={chatClearHistory}
+                onRemoveOutlineItemClick={handleRemoveDroppedItem}
+              />
+            }
+            elseShow={
+              <div className={"grid place-items-center h-full"}>
+                <APIKeyPromptForm />
+              </div>
+            }
           />
         </aside>
 

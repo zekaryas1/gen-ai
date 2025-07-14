@@ -5,8 +5,11 @@ import DroppedOutlineItem from "@/components/chat/DroppedOutlineItem";
 import { Conditional } from "@/components/ConditionalRenderer";
 import Message from "@/components/chat/Message";
 import ChatIntroMessage from "@/components/chat/ChatIntro";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { streamText } from "ai";
 
 interface ChatInterfaceProps {
+  plainApiKey: string;
   getContext: () => Promise<string>;
   onClearContextClick: () => void;
   droppedOutlineItems: DraggableOutlineItemData[];
@@ -15,6 +18,7 @@ interface ChatInterfaceProps {
 
 export default function ChatInterface(props: ChatInterfaceProps) {
   const {
+    plainApiKey,
     getContext,
     onClearContextClick,
     droppedOutlineItems,
@@ -25,6 +29,21 @@ export default function ChatInterface(props: ChatInterfaceProps) {
     useChat({
       onResponse: () => {
         onClearContextClick();
+      },
+      fetch: async (requestInfo, requestInit) => {
+        const { messages, context } = JSON.parse(requestInit?.body as string);
+
+        const google = createGoogleGenerativeAI({
+          apiKey: plainApiKey,
+        });
+
+        const result = streamText({
+          model: google("gemini-2.0-flash"),
+          system: `You are a helpful assistant. When answering questions, always prioritize and use the provided context first. Only rely on your own knowledge if the context is insufficient. Keep your responses concise, clear, and to the point. ${context}`,
+          messages,
+        });
+
+        return result.toDataStreamResponse();
       },
     });
 
@@ -62,8 +81,8 @@ export default function ChatInterface(props: ChatInterfaceProps) {
               <Message
                 key={message.id}
                 message={message}
-                onCopyClick={() => {
-                  copyMessageToClipboard(message.content);
+                onCopyClick={async () => {
+                  await copyMessageToClipboard(message.content);
                 }}
               />
             );

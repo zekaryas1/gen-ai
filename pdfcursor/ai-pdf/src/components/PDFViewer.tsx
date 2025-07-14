@@ -7,6 +7,7 @@ import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 import { Conditional } from "@/components/ConditionalRenderer";
 import PDFLayout from "@/components/PDFLayout";
 import { pdfUtilityManager } from "@/utils/files.utils";
+import { ApiKeyContextProvider } from "@/utils/ApiKeyContext";
 
 interface PDFViewerPropsType {
   file: File;
@@ -59,14 +60,16 @@ export default function PDFViewer(props: PDFViewerPropsType) {
       <Conditional
         check={pdfReady && pdfRef.current}
         ifShow={
-          <PDFLayout
-            pdf={pdfRef.current!}
-            virtuosoRef={virtuosoRef}
-            fileName={fileNameRef.current}
-            lastPagePosition={lastPagePositionRef.current}
-            inOutline={outlineRef.current}
-            updateLastVisitedPage={handleUpdateLastVisitedPage}
-          />
+          <ApiKeyContextProvider>
+            <PDFLayout
+              pdf={pdfRef.current!}
+              virtuosoRef={virtuosoRef}
+              fileName={fileNameRef.current}
+              lastPagePosition={lastPagePositionRef.current}
+              outlines={outlineRef.current}
+              updateLastVisitedPage={handleUpdateLastVisitedPage}
+            />
+          </ApiKeyContextProvider>
         }
       />
     </Document>
