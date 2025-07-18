@@ -52,13 +52,20 @@ export default function PDFLayout(props: PDFLayoutProps) {
   //api key
   const value = useContext(ApiKeyContext);
 
+  const updatePageNumber = useCallback(
+    (newPageNumber: number) => {
+      virtuosoRef.current?.scrollToIndex({ index: newPageNumber });
+    },
+    [virtuosoRef],
+  );
+
   const outlineScrollToPage = useCallback(
     async (item: OutlineItem) => {
       const pageIndex =
         await pagesUtilityManager.getOutlineItemPageNumber(item);
-      virtuosoRef.current?.scrollToIndex({ index: pageIndex });
+      updatePageNumber(pageIndex);
     },
-    [pagesUtilityManager, virtuosoRef],
+    [pagesUtilityManager, updatePageNumber],
   );
 
   const handleDragStart = useCallback((item: DraggableOutlineItemData) => {
@@ -132,7 +139,11 @@ export default function PDFLayout(props: PDFLayoutProps) {
 
         {/* PDF Content */}
         <main className="col-span-7 bg-black flex flex-col">
-          <Toolbar pageNumber={currentPageNumber} totalPages={pdf.numPages} />
+          <Toolbar
+            pageNumber={currentPageNumber}
+            totalPages={pdf.numPages}
+            onPageChange={updatePageNumber}
+          />
 
           <Virtuoso
             ref={virtuosoRef}
