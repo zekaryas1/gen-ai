@@ -51,6 +51,7 @@ export default function Toolbar(props: ToolbarProps) {
           ifShow={
             <input
               ref={inputRef}
+              autoFocus={showPageInput}
               type="number"
               placeholder={pageNumber.toString()}
               onKeyDown={onEnterClick}
