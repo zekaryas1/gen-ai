@@ -2,7 +2,6 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
 import { RefObject, useCallback, useContext, useMemo, useState } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import OutlineRenderer from "@/components/OutlineRenderer";
 import Toolbar from "@/components/Toolbar";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 import PDFPageWrapper from "@/components/PDFPageWrapper";
@@ -19,6 +18,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import SidebarOutlineRenderer from "@/components/SidebarOutlineRenderer";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -59,6 +59,7 @@ export default function PDFLayout(props: PDFLayoutProps) {
   >([]);
   const [activeDragItem, setActiveDragItem] =
     useState<DraggableOutlineItemData | null>(null);
+
   //api key
   const value = useContext(ApiKeyContext);
 
@@ -133,36 +134,35 @@ export default function PDFLayout(props: PDFLayoutProps) {
         direction="horizontal"
         className={""}
       >
-        {sidebarsToggle.showOutline && (
-          <>
-            <ResizablePanel
-              defaultSize={20}
-              minSize={20}
-              maxSize={30}
-              className={"bg-white"}
-              id={"left"}
-              order={1}
-            >
-              <div className={"overflow-y-scroll h-svh"}>
-                <Conditional
-                  check={outlines.length > 0}
-                  ifShow={
-                    <OutlineRenderer
-                      items={outlines}
-                      onNavigate={outlineScrollToPage}
-                    />
-                  }
-                  elseShow={
-                    <p className="text-gray-500 text-sm">
-                      Outline Unavailable, show thumbnail
-                    </p>
-                  }
-                />
-              </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-          </>
-        )}
+        <>
+          <ResizablePanel
+            defaultSize={20}
+            minSize={20}
+            maxSize={30}
+            className={"bg-white"}
+            id={"left"}
+            order={1}
+            hidden={!sidebarsToggle.showOutline}
+          >
+            <div className={"relative overflow-scroll h-svh"}>
+              <Conditional
+                check={outlines.length > 0}
+                ifShow={
+                  <SidebarOutlineRenderer
+                    items={outlines}
+                    onNavigate={outlineScrollToPage}
+                  />
+                }
+                elseShow={
+                  <p className="text-gray-500 text-sm">
+                    Outline Unavailable, show thumbnail
+                  </p>
+                }
+              />
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+        </>
         <ResizablePanel
           className={"h-svh overflow-scroll"}
           id={"middle"}
@@ -210,37 +210,34 @@ export default function PDFLayout(props: PDFLayoutProps) {
             />
           </>
         </ResizablePanel>
-        {sidebarsToggle.showChat && (
-          <>
-            <ResizableHandle withHandle />
-            <ResizablePanel
-              defaultSize={25}
-              minSize={25}
-              maxSize={35}
-              className={"h-svh overflow-hidden bg-white"}
-              id={"right"}
-              order={3}
-            >
-              <Conditional
-                check={value.apiKey}
-                ifShow={
-                  <ChatInterface
-                    plainApiKey={value.apiKey}
-                    droppedOutlineItems={droppedItemData}
-                    getContext={getTextContext}
-                    onClearContextClick={chatClearHistory}
-                    onRemoveOutlineItemClick={handleRemoveDroppedItem}
-                  />
-                }
-                elseShow={
-                  <div className={"grid place-items-center h-full"}>
-                    <APIKeyPromptForm />
-                  </div>
-                }
+        <ResizableHandle withHandle />
+        <ResizablePanel
+          defaultSize={25}
+          minSize={25}
+          maxSize={35}
+          className={"h-svh overflow-hidden bg-white"}
+          id={"right"}
+          order={3}
+          hidden={!sidebarsToggle.showChat}
+        >
+          <Conditional
+            check={value.apiKey}
+            ifShow={
+              <ChatInterface
+                plainApiKey={value.apiKey}
+                droppedOutlineItems={droppedItemData}
+                getContext={getTextContext}
+                onClearContextClick={chatClearHistory}
+                onRemoveOutlineItemClick={handleRemoveDroppedItem}
               />
-            </ResizablePanel>
-          </>
-        )}
+            }
+            elseShow={
+              <div className={"grid place-items-center h-full"}>
+                <APIKeyPromptForm />
+              </div>
+            }
+          />
+        </ResizablePanel>
       </ResizablePanelGroup>
       <OutlineItemDragOverlay activeDragItem={activeDragItem} />
     </DndWrapper>
