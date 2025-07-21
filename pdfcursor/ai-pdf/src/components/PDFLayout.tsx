@@ -13,8 +13,12 @@ import DndWrapper from "@/components/DndWrapper";
 import { PagesUtilityManager } from "@/utils/page.utils";
 import { ApiKeyContext } from "@/utils/ApiKeyContext";
 import APIKeyPromptForm from "@/components/chat/APIKeyPromptForm";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -124,14 +128,14 @@ export default function PDFLayout(props: PDFLayoutProps) {
 
   return (
     <DndWrapper onItemDragStart={handleDragStart} onItemDragEnd={handleDragEnd}>
-      <PanelGroup
+      <ResizablePanelGroup
         autoSaveId="conditional"
         direction="horizontal"
-        className={"bg-black gap-1"}
+        className={""}
       >
         {sidebarsToggle.showOutline && (
           <>
-            <Panel
+            <ResizablePanel
               defaultSize={20}
               minSize={20}
               maxSize={30}
@@ -155,11 +159,15 @@ export default function PDFLayout(props: PDFLayoutProps) {
                   }
                 />
               </div>
-            </Panel>
-            <PanelResizeHandle />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
           </>
         )}
-        <Panel className={"h-svh overflow-scroll"} id={"middle"} order={2}>
+        <ResizablePanel
+          className={"h-svh overflow-scroll"}
+          id={"middle"}
+          order={2}
+        >
           <>
             <Toolbar
               pageNumber={currentPageNumber}
@@ -201,11 +209,11 @@ export default function PDFLayout(props: PDFLayoutProps) {
               )}
             />
           </>
-        </Panel>
+        </ResizablePanel>
         {sidebarsToggle.showChat && (
           <>
-            <PanelResizeHandle />
-            <Panel
+            <ResizableHandle withHandle />
+            <ResizablePanel
               defaultSize={25}
               minSize={25}
               maxSize={35}
@@ -230,10 +238,10 @@ export default function PDFLayout(props: PDFLayoutProps) {
                   </div>
                 }
               />
-            </Panel>
+            </ResizablePanel>
           </>
         )}
-      </PanelGroup>
+      </ResizablePanelGroup>
       <OutlineItemDragOverlay activeDragItem={activeDragItem} />
     </DndWrapper>
   );
