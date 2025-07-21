@@ -20,6 +20,7 @@
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "react-pdf": "^9.2.1",
+    "react-resizable-panels": "^3.0.3",
     "react-virtuoso": "^4.12.8",
     "remark-gfm": "^4.0.1",
     "remark-sugar-high": "^0.6.0",

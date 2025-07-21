@@ -8,12 +8,13 @@ import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
 import PDFPageWrapper from "@/components/PDFPageWrapper";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { Conditional } from "@/components/ConditionalRenderer";
-import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
 import { pdfjs } from "react-pdf";
 import DndWrapper from "@/components/DndWrapper";
 import { PagesUtilityManager } from "@/utils/page.utils";
 import { ApiKeyContext } from "@/utils/ApiKeyContext";
 import APIKeyPromptForm from "@/components/chat/APIKeyPromptForm";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -39,6 +40,11 @@ export default function PDFLayout(props: PDFLayoutProps) {
     outlines,
   } = props;
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
+  const [sidebarsToggle, setSidebarToggle] = useState({
+    showOutline: true,
+    showChat: true,
+  });
+
   const pagesUtilityManager = useMemo(
     () => new PagesUtilityManager(pdf),
     [pdf],
@@ -118,75 +124,117 @@ export default function PDFLayout(props: PDFLayoutProps) {
 
   return (
     <DndWrapper onItemDragStart={handleDragStart} onItemDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-12 h-svh gap-2 bg-black">
-        {/* Sidebar */}
-        <aside className="col-span-2 overflow-y-scroll p-2 bg-white">
-          <Conditional
-            check={outlines.length > 0}
-            ifShow={
-              <OutlineRenderer
-                items={outlines}
-                onNavigate={outlineScrollToPage}
-              />
-            }
-            elseShow={
-              <p className="text-gray-500 text-sm">
-                Outline Unavailable, show thumbnail
-              </p>
-            }
-          />
-        </aside>
-
-        {/* PDF Content */}
-        <main className="col-span-7 bg-black flex flex-col">
-          <Toolbar
-            pageNumber={currentPageNumber}
-            totalPages={pdf.numPages}
-            onPageChange={updatePageNumber}
-          />
-
-          <Virtuoso
-            ref={virtuosoRef}
-            style={{ height: "95svh" }}
-            totalCount={pdf.numPages}
-            overscan={10}
-            id={"pdf-container"}
-            components={{
-              ScrollSeekPlaceholder: ScrollPlaceHolder,
-            }}
-            initialTopMostItemIndex={Math.max(0, lastPagePosition - 1)}
-            itemContent={(index) => (
-              <PDFPageWrapper
-                pageNumber={index + 1}
-                pageChangeListener={handlePageChange}
-              />
-            )}
-          />
-        </main>
-
-        {/* Chat Box */}
-        <aside className="col-span-3 bg-white overflow-hidden">
-          <Conditional
-            check={value.apiKey}
-            ifShow={
-              <ChatInterface
-                plainApiKey={value.apiKey}
-                droppedOutlineItems={droppedItemData}
-                getContext={getTextContext}
-                onClearContextClick={chatClearHistory}
-                onRemoveOutlineItemClick={handleRemoveDroppedItem}
-              />
-            }
-            elseShow={
-              <div className={"grid place-items-center h-full"}>
-                <APIKeyPromptForm />
+      <PanelGroup
+        autoSaveId="conditional"
+        direction="horizontal"
+        className={"bg-black gap-1"}
+      >
+        {sidebarsToggle.showOutline && (
+          <>
+            <Panel
+              defaultSize={20}
+              minSize={20}
+              maxSize={30}
+              className={"bg-white"}
+              id={"left"}
+              order={1}
+            >
+              <div className={"overflow-y-scroll h-svh"}>
+                <Conditional
+                  check={outlines.length > 0}
+                  ifShow={
+                    <OutlineRenderer
+                      items={outlines}
+                      onNavigate={outlineScrollToPage}
+                    />
+                  }
+                  elseShow={
+                    <p className="text-gray-500 text-sm">
+                      Outline Unavailable, show thumbnail
+                    </p>
+                  }
+                />
               </div>
-            }
-          />
-        </aside>
+            </Panel>
+            <PanelResizeHandle />
+          </>
+        )}
+        <Panel className={"h-svh overflow-scroll"} id={"middle"} order={2}>
+          <>
+            <Toolbar
+              pageNumber={currentPageNumber}
+              totalPages={pdf.numPages}
+              onPageChange={updatePageNumber}
+              onToggleChat={() => {
+                setSidebarToggle((prevState) => {
+                  return {
+                    ...prevState,
+                    showChat: !prevState.showChat,
+                  };
+                });
+              }}
+              onToggleOutline={() => {
+                setSidebarToggle((prevState) => {
+                  return {
+                    ...prevState,
+                    showOutline: !prevState.showOutline,
+                  };
+                });
+              }}
+            />
 
-        <OutlineItemDragOverlay activeDragItem={activeDragItem} />
-      </div>
+            <Virtuoso
+              ref={virtuosoRef}
+              style={{ height: "95svh" }}
+              totalCount={pdf.numPages}
+              overscan={10}
+              id={"pdf-container"}
+              components={{
+                ScrollSeekPlaceholder: ScrollPlaceHolder,
+              }}
+              initialTopMostItemIndex={Math.max(0, lastPagePosition - 1)}
+              itemContent={(index) => (
+                <PDFPageWrapper
+                  pageNumber={index + 1}
+                  pageChangeListener={handlePageChange}
+                />
+              )}
+            />
+          </>
+        </Panel>
+        {sidebarsToggle.showChat && (
+          <>
+            <PanelResizeHandle />
+            <Panel
+              defaultSize={25}
+              minSize={25}
+              maxSize={35}
+              className={"h-svh overflow-hidden bg-white"}
+              id={"right"}
+              order={3}
+            >
+              <Conditional
+                check={value.apiKey}
+                ifShow={
+                  <ChatInterface
+                    plainApiKey={value.apiKey}
+                    droppedOutlineItems={droppedItemData}
+                    getContext={getTextContext}
+                    onClearContextClick={chatClearHistory}
+                    onRemoveOutlineItemClick={handleRemoveDroppedItem}
+                  />
+                }
+                elseShow={
+                  <div className={"grid place-items-center h-full"}>
+                    <APIKeyPromptForm />
+                  </div>
+                }
+              />
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
+      <OutlineItemDragOverlay activeDragItem={activeDragItem} />
     </DndWrapper>
   );
 }
