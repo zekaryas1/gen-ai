@@ -5,4 +5,5 @@ export interface LocalStorageFile {
   thumbnail: string;
   lastVisitedPage: number;
   lastOpenedDate: number;
+  outlineState: string[];
 }

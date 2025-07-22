@@ -106,6 +106,7 @@ class PdfUtilityManager {
         thumbnail: await this.getPdfPageThumbnail(pdf),
         lastVisitedPage: 1, // New entries start at page 1
         lastOpenedDate: Date.now(),
+        outlineState: [],
       };
     }
 
@@ -151,6 +152,23 @@ class PdfUtilityManager {
         `File '${fileName}' not found in history to update last visited page.`,
       );
     }
+  }
+
+  public replaceOutlineState(fileName: string, newState: string[]) {
+    if (fileName) {
+      const prevFiles: LocalStorageFile[] = this.getPreviousFiles();
+      const index = prevFiles.findIndex((it) => it.fileName === fileName);
+      if (index != -1) {
+        prevFiles[index].outlineState = newState;
+        localStorage.setItem(this.storageKey, JSON.stringify(prevFiles));
+      }
+    }
+  }
+
+  public getOutlineState(fileName: string): string[] {
+    const prevFiles: LocalStorageFile[] = this.getPreviousFiles();
+    const history = prevFiles.find((it) => it.fileName === fileName);
+    return history ? history.outlineState : [];
   }
 }
 

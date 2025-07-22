@@ -20,6 +20,7 @@ export default function PDFViewer(props: PDFViewerPropsType) {
   const fileNameRef = useRef<string>("");
   const outlineRef = useRef<OutlineItem[]>([]);
   const lastPagePositionRef = useRef<number>(1);
+  const outlineStateRef = useRef<string[]>([]);
   const [pdfReady, setPdfReady] = useState(false);
 
   const handleLoadSuccess = useCallback(
@@ -31,6 +32,7 @@ export default function PDFViewer(props: PDFViewerPropsType) {
       fileNameRef.current = fileName;
       lastPagePositionRef.current =
         pdfUtilityManager.getLastVisitedPage(fileName);
+      outlineStateRef.current = pdfUtilityManager.getOutlineState(fileName);
 
       setPdfReady(true);
       await pdfUtilityManager.saveInitialHistory(doc, fileName);
@@ -66,7 +68,10 @@ export default function PDFViewer(props: PDFViewerPropsType) {
               virtuosoRef={virtuosoRef}
               fileName={fileNameRef.current}
               lastPagePosition={lastPagePositionRef.current}
-              outlines={outlineRef.current}
+              outlineData={{
+                outline: outlineRef.current,
+                state: outlineStateRef.current,
+              }}
               updateLastVisitedPage={handleUpdateLastVisitedPage}
             />
           </ApiKeyContextProvider>

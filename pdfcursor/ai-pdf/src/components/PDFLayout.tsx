@@ -19,13 +19,17 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import SidebarOutlineRenderer from "@/components/SidebarOutlineRenderer";
+import { pdfUtilityManager } from "@/utils/files.utils";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
   virtuosoRef: RefObject<VirtuosoHandle | null>;
   fileName: string;
   lastPagePosition: number;
-  outlines: OutlineItem[];
+  outlineData: {
+    outline: OutlineItem[];
+    state: string[];
+  };
   updateLastVisitedPage: (newPage: number) => void;
 }
 
@@ -41,7 +45,8 @@ export default function PDFLayout(props: PDFLayoutProps) {
     virtuosoRef,
     updateLastVisitedPage,
     lastPagePosition,
-    outlines,
+    outlineData,
+    fileName,
   } = props;
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
   const [sidebarsToggle, setSidebarToggle] = useState({
@@ -127,6 +132,28 @@ export default function PDFLayout(props: PDFLayoutProps) {
     [updateLastVisitedPage],
   );
 
+  const handleOutlineStateChange = useCallback((outlineStates: string[]) => {
+    pdfUtilityManager.replaceOutlineState(fileName, outlineStates);
+  }, []);
+
+  const handleToggleChatSidebar = useCallback(() => {
+    setSidebarToggle((prevState) => {
+      return {
+        ...prevState,
+        showChat: !prevState.showChat,
+      };
+    });
+  }, []);
+
+  const handleToggleOutlineSidebar = useCallback(() => {
+    setSidebarToggle((prevState) => {
+      return {
+        ...prevState,
+        showOutline: !prevState.showOutline,
+      };
+    });
+  }, []);
+
   return (
     <DndWrapper onItemDragStart={handleDragStart} onItemDragEnd={handleDragEnd}>
       <ResizablePanelGroup
@@ -146,11 +173,13 @@ export default function PDFLayout(props: PDFLayoutProps) {
           >
             <div className={"relative overflow-scroll h-svh"}>
               <Conditional
-                check={outlines.length > 0}
+                check={outlineData.outline.length > 0}
                 ifShow={
                   <SidebarOutlineRenderer
-                    items={outlines}
+                    items={outlineData.outline}
+                    state={outlineData.state}
                     onNavigate={outlineScrollToPage}
+                    onReceiveStateChange={handleOutlineStateChange}
                   />
                 }
                 elseShow={
@@ -173,22 +202,8 @@ export default function PDFLayout(props: PDFLayoutProps) {
               pageNumber={currentPageNumber}
               totalPages={pdf.numPages}
               onPageChange={updatePageNumber}
-              onToggleChat={() => {
-                setSidebarToggle((prevState) => {
-                  return {
-                    ...prevState,
-                    showChat: !prevState.showChat,
-                  };
-                });
-              }}
-              onToggleOutline={() => {
-                setSidebarToggle((prevState) => {
-                  return {
-                    ...prevState,
-                    showOutline: !prevState.showOutline,
-                  };
-                });
-              }}
+              onToggleChat={handleToggleChatSidebar}
+              onToggleOutline={handleToggleOutlineSidebar}
             />
 
             <Virtuoso

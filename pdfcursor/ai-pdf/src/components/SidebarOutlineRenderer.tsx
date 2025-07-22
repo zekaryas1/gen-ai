@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useCallback, useRef } from "react";
 import { ChevronRight } from "lucide-react";
 import { SidebarMenuSub } from "@/components/ui/sidebar";
 import {
@@ -14,16 +15,31 @@ interface OutlineRendererProps {
   items: OutlineItem[];
   onNavigate: (item: OutlineItem) => void;
   nextSiblingItem?: OutlineItem;
+  onReceiveStateChange: (outlineStates: string[]) => void;
+  state: string[];
 }
 
 interface TreeProps {
   item: OutlineItem;
   onNavigate: (item: OutlineItem) => void;
   nextSiblingItem?: OutlineItem;
+  onOutlineStateChange: (item: OutlineItem) => void;
+  state: string[];
 }
 
 export default function SidebarOutlineRenderer(props: OutlineRendererProps) {
-  const { items, onNavigate, nextSiblingItem } = props;
+  const { items, onNavigate, nextSiblingItem, onReceiveStateChange, state } =
+    props;
+  const outlineStateRef = useRef<Set<string>>(new Set<string>(state));
+
+  const prepareOutlineStateData = useCallback((clickedItem: OutlineItem) => {
+    if (outlineStateRef.current.has(clickedItem.title)) {
+      outlineStateRef.current.delete(clickedItem.title);
+    } else {
+      outlineStateRef.current.add(clickedItem.title);
+    }
+    onReceiveStateChange([...outlineStateRef.current.keys()]);
+  }, []);
 
   return (
     <ul className="p-3 space-y-1.5">
@@ -40,6 +56,8 @@ export default function SidebarOutlineRenderer(props: OutlineRendererProps) {
             item={item}
             nextSiblingItem={computedNextSibling}
             onNavigate={onNavigate}
+            onOutlineStateChange={prepareOutlineStateData}
+            state={state}
           />
         );
       })}
@@ -48,7 +66,8 @@ export default function SidebarOutlineRenderer(props: OutlineRendererProps) {
 }
 
 function Tree(props: TreeProps) {
-  const { item, nextSiblingItem, onNavigate } = props;
+  const { item, nextSiblingItem, onNavigate, onOutlineStateChange, state } =
+    props;
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.title,
@@ -59,7 +78,12 @@ function Tree(props: TreeProps) {
     } as DraggableOutlineItemData,
   });
 
+  const isOpen = state.findIndex((it) => it == item.title);
   const commonClasses = cn("hover:bg-gray-50 cursor-pointer rounded-md");
+
+  const handleCollapseTriggerClick = () => {
+    onOutlineStateChange(item);
+  };
 
   if (!item.items?.length) {
     return (
@@ -85,12 +109,13 @@ function Tree(props: TreeProps) {
       {...attributes}
       {...listeners}
       className={cn(
-        "group/collapsible [&[data-state=open]>li>span>svg:first-child]:rotate-90",
+        "group/collapsible [&[data-state=open]>li>svg:first-child]:rotate-90",
         isDragging && "bg-yellow-100",
       )}
+      defaultOpen={isOpen != -1}
     >
-      <div className="flex items-center">
-        <CollapsibleTrigger asChild>
+      <li className="flex items-center">
+        <CollapsibleTrigger asChild onClick={handleCollapseTriggerClick}>
           <ChevronRight className="transition-transform w-4 h-4" />
         </CollapsibleTrigger>
         <span
@@ -99,7 +124,7 @@ function Tree(props: TreeProps) {
         >
           {item.title}
         </span>
-      </div>
+      </li>
 
       <CollapsibleContent>
         <SidebarMenuSub className="w-full space-y-0.5 py-1.5">
@@ -109,6 +134,8 @@ function Tree(props: TreeProps) {
               item={subItem}
               onNavigate={onNavigate}
               nextSiblingItem={nextSiblingItem}
+              onOutlineStateChange={onOutlineStateChange}
+              state={state}
             />
           ))}
         </SidebarMenuSub>
