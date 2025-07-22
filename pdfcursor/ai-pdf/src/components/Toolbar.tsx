@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Conditional } from "@/components/ConditionalRenderer";
+import { Button } from "@/components/ui/button";
 
 interface ToolbarProps {
   pageNumber: number;
@@ -41,10 +42,13 @@ export default function Toolbar(props: ToolbarProps) {
         height: "5svh",
       }}
     >
-      <div className="flex group gap-1.5" onMouseLeave={hidePageNumberInput}>
-        <button onClick={onToggleOutline}>
+      <div
+        className="flex items-center group gap-1.5"
+        onMouseLeave={hidePageNumberInput}
+      >
+        <Button onClick={onToggleOutline} variant={"ghost"} size={"icon"}>
           <SidebarLeft />
-        </button>
+        </Button>
         <p>Page</p>
         <Conditional
           check={showPageInput}
@@ -69,9 +73,9 @@ export default function Toolbar(props: ToolbarProps) {
         />
         <p>of {totalPages}</p>
       </div>
-      <button onClick={onToggleChat}>
+      <Button onClick={onToggleChat} size={"icon"} variant={"ghost"}>
         <SidebarRight />
-      </button>
+      </Button>
     </div>
   );
 }

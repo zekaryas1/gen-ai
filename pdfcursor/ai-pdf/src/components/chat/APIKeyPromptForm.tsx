@@ -2,6 +2,9 @@ import { useContext, useState } from "react";
 import { Conditional } from "@/components/ConditionalRenderer";
 import { encryptionManager } from "@/utils/encryption.utils";
 import { ApiKeyContext } from "@/utils/ApiKeyContext";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { FileKey2, Save } from "lucide-react";
 
 export default function APIKeyPromptForm() {
   const value = useContext(ApiKeyContext);
@@ -75,16 +78,18 @@ function ApiKeyPasswordForm({
   onDecryptAction: (formData: FormData) => void;
 }) {
   return (
-    <div>
+    <div className={"space-y-1.5"}>
       <p>Please provide the password to decrypt the api key</p>
-      <form action={onDecryptAction} className={"flex flex-col"}>
-        <input
+      <form action={onDecryptAction} className={"flex flex-col gap-2"}>
+        <Input
           type={"password"}
           name={"password"}
           placeholder={"password"}
           required
         />
-        <input type={"submit"} value={"load"} />
+        <Button type={"submit"}>
+          <FileKey2 /> load
+        </Button>
       </form>
     </div>
   );
@@ -98,15 +103,15 @@ function ApiKeyNewForm({
   const [storeType, setStoreType] = useState<string>("temporary");
 
   return (
-    <div>
+    <div className={"p-3 space-y-1.5"}>
       <div>
-        <p className={"text-lg"}>You do not have api key</p>
+        <p className={"text-lg font-bold"}>You do not have api key</p>
         <p>
           Please provide google api key and password to securely store on web
         </p>
       </div>
       <form className={"flex flex-col gap-2"} action={onSaveAction}>
-        <input
+        <Input
           type={"text"}
           placeholder={"gemini flash api key"}
           name={"apiKey"}
@@ -127,14 +132,17 @@ function ApiKeyNewForm({
         </select>
 
         {storeType == "permanent" && (
-          <input
+          <Input
             type={"password"}
             placeholder={"password for encryption"}
             name={"password"}
             required
           />
         )}
-        <input type={"submit"} value={"Save"} />
+        <Button type={"submit"}>
+          <Save />
+          Save
+        </Button>
       </form>
     </div>
   );

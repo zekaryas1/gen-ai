@@ -69,7 +69,7 @@ function Tree(props: TreeProps) {
         {...listeners}
         className={cn(
           commonClasses,
-          "block px-1.5 py-0.5",
+          "block px-1.5 py-0.5 w-full",
           isDragging && "bg-yellow-100",
         )}
         onClick={() => onNavigate(item)}
@@ -89,21 +89,20 @@ function Tree(props: TreeProps) {
         isDragging && "bg-yellow-100",
       )}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center">
         <CollapsibleTrigger asChild>
-          <li className="flex items-center gap-1">
-            <span>
-              <ChevronRight className="transition-transform w-4 h-4" />
-            </span>
-          </li>
+          <ChevronRight className="transition-transform w-4 h-4" />
         </CollapsibleTrigger>
-        <span className={cn(commonClasses)} onClick={() => onNavigate(item)}>
+        <span
+          className={cn(commonClasses, "w-full px-1.5")}
+          onClick={() => onNavigate(item)}
+        >
           {item.title}
         </span>
       </div>
 
       <CollapsibleContent>
-        <SidebarMenuSub className="space-y-0.5 py-1.5">
+        <SidebarMenuSub className="w-full space-y-0.5 py-1.5">
           {item.items.map((subItem, index) => (
             <Tree
               key={`${subItem.title}-${index}`}

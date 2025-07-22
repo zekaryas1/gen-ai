@@ -7,6 +7,9 @@ import Message from "@/components/chat/Message";
 import ChatIntroMessage from "@/components/chat/ChatIntro";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { streamText } from "ai";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { BrushCleaning, Send } from "lucide-react";
 
 interface ChatInterfaceProps {
   plainApiKey: string;
@@ -60,17 +63,16 @@ export default function ChatInterface(props: ChatInterfaceProps) {
       className={`flex flex-col h-full  ${isOver ? "border-yellow-300 bg-yellow-50" : "border-gray-300 bg-gray-50"}`}
       ref={setNodeRef}
     >
-      <div className={"flex justify-between items-center p-1 border"}>
+      <div className={"flex justify-between items-center p-1.5 border"}>
         <p>Chat interface</p>
-        <button
-          className={"bg-black border shadow text-white p-2"}
+        <Button
           onClick={() => {
             setMessages([]);
             onClearContextClick();
           }}
         >
-          Clear history
-        </button>
+          <BrushCleaning /> Clear history
+        </Button>
       </div>
       <div className={"flex-1 overflow-scroll p-3"}>
         <Conditional
@@ -103,7 +105,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
         })}
       </div>
       <form
-        className="flex"
+        className="grid gap-2 p-2"
         onSubmit={async (event) => {
           event.preventDefault();
           const context = await getContext();
@@ -114,19 +116,17 @@ export default function ChatInterface(props: ChatInterfaceProps) {
           });
         }}
       >
-        <input
-          type={"text"}
+        <Textarea
           placeholder={"Your question"}
-          className={"border w-full p-4"}
-          height={300}
           value={input}
           name={"prompt"}
           required
+          className={"max-h-32"}
           onChange={handleInputChange}
         />
-        <button className={"border border-s-0 px-4"} type={"submit"}>
-          Send
-        </button>
+        <Button type={"submit"}>
+          <Send /> Send
+        </Button>
       </form>
     </div>
   );
