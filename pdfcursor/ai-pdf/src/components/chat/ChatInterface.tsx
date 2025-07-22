@@ -10,6 +10,7 @@ import { streamText } from "ai";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BrushCleaning, Send } from "lucide-react";
+import { FormEvent } from "react";
 
 interface ChatInterfaceProps {
   plainApiKey: string;
@@ -58,12 +59,26 @@ export default function ChatInterface(props: ChatInterfaceProps) {
     await navigator.clipboard.writeText(message);
   };
 
+  const handleUserQuestion = async (event: FormEvent) => {
+    event.preventDefault();
+    const context = await getContext();
+    handleSubmit(event, {
+      body: {
+        context: context,
+      },
+    });
+  };
+
   return (
     <div
-      className={`flex flex-col h-full  ${isOver ? "border-yellow-300 bg-yellow-50" : "border-gray-300 bg-gray-50"}`}
+      className={`flex flex-col h-full bg-gray-50 ${isOver ? "border-yellow-300 bg-yellow-50" : "border-gray-300"}`}
       ref={setNodeRef}
     >
-      <div className={"flex justify-between items-center p-1.5 border"}>
+      <div
+        className={
+          "flex justify-between items-center p-1.5 border border-s-0 bg-white"
+        }
+      >
         <p>Chat interface</p>
         <Button
           onClick={() => {
@@ -104,24 +119,13 @@ export default function ChatInterface(props: ChatInterfaceProps) {
           );
         })}
       </div>
-      <form
-        className="grid gap-2 p-2"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const context = await getContext();
-          handleSubmit(event, {
-            body: {
-              context: context,
-            },
-          });
-        }}
-      >
+      <form className="grid gap-2 p-2" onSubmit={handleUserQuestion}>
         <Textarea
           placeholder={"Your question"}
           value={input}
           name={"prompt"}
           required
-          className={"max-h-32"}
+          className={"max-h-32 bg-white"}
           onChange={handleInputChange}
         />
         <Button type={"submit"}>
