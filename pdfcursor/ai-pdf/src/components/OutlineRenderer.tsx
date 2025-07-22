@@ -1,35 +1,63 @@
-import React from "react";
+import * as React from "react";
+import { useCallback, useRef } from "react";
+import { ChevronRight } from "lucide-react";
+import { SidebarMenuSub } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
 import { useDraggable } from "@dnd-kit/core";
-import { Conditional } from "@/components/ConditionalRenderer";
+import { cn } from "@/lib/utils";
 
-interface OutlineRendererPropType {
+interface OutlineRendererProps {
   items: OutlineItem[];
   onNavigate: (item: OutlineItem) => void;
   nextSiblingItem?: OutlineItem;
+  onReceiveStateChange: (outlineStates: string[]) => void;
+  state: string[];
 }
 
-function OutlineRenderer(props: OutlineRendererPropType) {
-  const { items, onNavigate, nextSiblingItem } = props;
+interface TreeProps {
+  item: OutlineItem;
+  onNavigate: (item: OutlineItem) => void;
+  nextSiblingItem?: OutlineItem;
+  onOutlineStateChange: (item: OutlineItem) => void;
+  state: string[];
+}
+
+export default function OutlineRenderer(props: OutlineRendererProps) {
+  const { items, onNavigate, nextSiblingItem, onReceiveStateChange, state } =
+    props;
+  const outlineStateRef = useRef<Set<string>>(new Set<string>(state));
+
+  const prepareOutlineStateData = useCallback((clickedItem: OutlineItem) => {
+    if (outlineStateRef.current.has(clickedItem.title)) {
+      outlineStateRef.current.delete(clickedItem.title);
+    } else {
+      outlineStateRef.current.add(clickedItem.title);
+    }
+    onReceiveStateChange([...outlineStateRef.current.keys()]);
+  }, []);
 
   return (
-    <ul className="pl-1.5 text-sm text-gray-700">
-      {items.map((item) => {
-        const currNext = items.findIndex((it) => it.title == item.title);
-        let cNextSiblingItem: OutlineItem | undefined;
-
-        if (currNext != -1 && currNext + 1 < items.length) {
-          cNextSiblingItem = items[currNext + 1];
-        } else {
-          cNextSiblingItem = nextSiblingItem;
-        }
+    <ul className="p-3 space-y-1.5 bg-gray-50 flex-1 overflow-y-scroll">
+      {items.map((item, index) => {
+        const currentIndex = items.findIndex((it) => it.title === item.title);
+        const computedNextSibling =
+          currentIndex !== -1 && currentIndex + 1 < items.length
+            ? items[currentIndex + 1]
+            : nextSiblingItem;
 
         return (
-          <DraggableOutlineItem
-            key={item.title}
+          <Tree
+            key={`${item.title}-${index}`}
             item={item}
+            nextSiblingItem={computedNextSibling}
             onNavigate={onNavigate}
-            nextSiblingItem={cNextSiblingItem}
+            onOutlineStateChange={prepareOutlineStateData}
+            state={state}
           />
         );
       })}
@@ -37,52 +65,81 @@ function OutlineRenderer(props: OutlineRendererPropType) {
   );
 }
 
-function DraggableOutlineItem(props: {
-  item: OutlineItem;
-  onNavigate: (item: OutlineItem) => void;
-  nextSiblingItem?: OutlineItem;
-}) {
-  const { item, onNavigate, nextSiblingItem } = props;
+function Tree(props: TreeProps) {
+  const { item, nextSiblingItem, onNavigate, onOutlineStateChange, state } =
+    props;
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: item.title,
     data: {
       currentItem: item,
-      nextSiblingItem: nextSiblingItem,
-      isCurrentItemLeaf: item.items?.length == 0,
+      nextSiblingItem,
+      isCurrentItemLeaf: item.items?.length === 0,
     } as DraggableOutlineItemData,
   });
 
+  const isOpen = state.findIndex((it) => it == item.title);
+  const commonClasses = cn("hover:bg-gray-50 cursor-pointer rounded-md");
+
+  const handleCollapseTriggerClick = () => {
+    onOutlineStateChange(item);
+  };
+
+  if (!item.items?.length) {
+    return (
+      <li
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+        className={cn(
+          commonClasses,
+          "block px-1.5 py-0.5 w-full",
+          isDragging && "bg-yellow-100",
+        )}
+        onClick={() => onNavigate(item)}
+      >
+        {item.title}
+      </li>
+    );
+  }
+
   return (
-    <li
-      key={`${item.title}`}
+    <Collapsible
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={`
-         ${isDragging ? "bg-yellow-100" : ""}
-      `}
+      className={cn(
+        "group/collapsible [&[data-state=open]>li>svg:first-child]:rotate-90",
+        isDragging && "bg-yellow-100",
+      )}
+      defaultOpen={isOpen != -1}
     >
-      <button
-        onClick={() => {
-          onNavigate(item);
-        }}
-        className="hover:underline text-left cursor-pointer px-1.5 py-0.5"
-      >
-        {item.title}
-      </button>
-      <Conditional
-        check={item.items?.length > 0}
-        ifShow={
-          <OutlineRenderer
-            items={item.items}
-            onNavigate={onNavigate}
-            nextSiblingItem={nextSiblingItem}
-          />
-        }
-      />
-    </li>
+      <li className="flex items-center">
+        <CollapsibleTrigger asChild onClick={handleCollapseTriggerClick}>
+          <ChevronRight className="transition-transform w-4 h-4" />
+        </CollapsibleTrigger>
+        <span
+          className={cn(commonClasses, "w-full px-1.5")}
+          onClick={() => onNavigate(item)}
+        >
+          {item.title}
+        </span>
+      </li>
+
+      <CollapsibleContent>
+        <SidebarMenuSub className="w-full space-y-0.5 py-1.5">
+          {item.items.map((subItem, index) => (
+            <Tree
+              key={`${subItem.title}-${index}`}
+              item={subItem}
+              onNavigate={onNavigate}
+              nextSiblingItem={nextSiblingItem}
+              onOutlineStateChange={onOutlineStateChange}
+              state={state}
+            />
+          ))}
+        </SidebarMenuSub>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
-
-export default React.memo(OutlineRenderer);

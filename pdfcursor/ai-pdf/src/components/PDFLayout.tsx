@@ -18,8 +18,9 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import SidebarOutlineRenderer from "@/components/SidebarOutlineRenderer";
+import OutlineRenderer from "@/components/OutlineRenderer";
 import { pdfUtilityManager } from "@/utils/files.utils";
+import OutlineToolbar from "@/components/OutlineToolbar";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -171,21 +172,22 @@ export default function PDFLayout(props: PDFLayoutProps) {
             order={1}
             hidden={!sidebarsToggle.showOutline}
           >
-            <div className={"relative overflow-scroll h-svh"}>
+            <div className={"relative overflow-scroll h-svh flex flex-col"}>
+              <OutlineToolbar fileName={fileName} />
               <Conditional
                 check={outlineData.outline.length > 0}
                 ifShow={
-                  <SidebarOutlineRenderer
-                    items={outlineData.outline}
-                    state={outlineData.state}
-                    onNavigate={outlineScrollToPage}
-                    onReceiveStateChange={handleOutlineStateChange}
-                  />
+                  <>
+                    <OutlineRenderer
+                      items={outlineData.outline}
+                      state={outlineData.state}
+                      onNavigate={outlineScrollToPage}
+                      onReceiveStateChange={handleOutlineStateChange}
+                    />
+                  </>
                 }
                 elseShow={
-                  <p className="text-gray-500 text-sm">
-                    Outline Unavailable, show thumbnail
-                  </p>
+                  <p className="text-gray-500 text-sm">Outline Unavailable</p>
                 }
               />
             </div>
