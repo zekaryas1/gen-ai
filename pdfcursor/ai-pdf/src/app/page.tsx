@@ -6,9 +6,6 @@ import {
   useRef,
   useState,
 } from "react";
-
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
 import { Conditional } from "@/components/ConditionalRenderer";
 import FileSelector from "@/components/FileSelector";
 import PreviousFiles from "@/components/PreviousFiles";

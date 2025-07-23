@@ -22,6 +22,10 @@ import OutlineRenderer from "@/components/OutlineRenderer";
 import { pdfUtilityManager } from "@/utils/files.utils";
 import OutlineToolbar from "@/components/OutlineToolbar";
 
+//pdf js css
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
   virtuosoRef: RefObject<VirtuosoHandle | null>;
