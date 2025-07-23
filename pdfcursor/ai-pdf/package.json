@@ -6,8 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "pdfJsToBuild": "node move-pdf-build.js"
+    "lint": "next lint"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",
