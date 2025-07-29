@@ -20,6 +20,7 @@ interface OutlineRendererProps {
 }
 
 interface TreeProps {
+  id: string;
   item: OutlineItem;
   onNavigate: (item: OutlineItem) => void;
   nextSiblingItem?: OutlineItem;
@@ -56,6 +57,7 @@ export default function OutlineRenderer(props: OutlineRendererProps) {
         return (
           <Tree
             key={`${item.title}-${index}`}
+            id={`${item.title}-${index}`}
             item={item}
             nextSiblingItem={computedNextSibling}
             onNavigate={onNavigate}
@@ -69,14 +71,14 @@ export default function OutlineRenderer(props: OutlineRendererProps) {
 }
 
 function Tree(props: TreeProps) {
-  const { item, nextSiblingItem, onNavigate, onOutlineStateChange, state } =
+  const { item, nextSiblingItem, onNavigate, onOutlineStateChange, state, id } =
     props;
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: item.title,
+    id: id,
     data: {
       currentItem: item,
-      nextSiblingItem,
+      nextSiblingItem: nextSiblingItem,
       isCurrentItemLeaf: item.items?.length === 0,
     } as DraggableOutlineItemData,
   });
@@ -134,6 +136,7 @@ function Tree(props: TreeProps) {
           {item.items.map((subItem, index) => (
             <Tree
               key={`${subItem.title}-${index}`}
+              id={`${subItem.title}-${index}`}
               item={subItem}
               onNavigate={onNavigate}
               nextSiblingItem={nextSiblingItem}
