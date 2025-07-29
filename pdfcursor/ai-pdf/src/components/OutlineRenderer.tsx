@@ -32,14 +32,17 @@ export default function OutlineRenderer(props: OutlineRendererProps) {
     props;
   const outlineStateRef = useRef<Set<string>>(new Set<string>(state));
 
-  const prepareOutlineStateData = useCallback((clickedItem: OutlineItem) => {
-    if (outlineStateRef.current.has(clickedItem.title)) {
-      outlineStateRef.current.delete(clickedItem.title);
-    } else {
-      outlineStateRef.current.add(clickedItem.title);
-    }
-    onReceiveStateChange([...outlineStateRef.current.keys()]);
-  }, []);
+  const prepareOutlineStateData = useCallback(
+    (clickedItem: OutlineItem) => {
+      if (outlineStateRef.current.has(clickedItem.title)) {
+        outlineStateRef.current.delete(clickedItem.title);
+      } else {
+        outlineStateRef.current.add(clickedItem.title);
+      }
+      onReceiveStateChange([...outlineStateRef.current.keys()]);
+    },
+    [onReceiveStateChange],
+  );
 
   return (
     <ul className="p-3 space-y-1.5 bg-gray-50 flex-1 overflow-y-scroll">
@@ -79,7 +82,7 @@ function Tree(props: TreeProps) {
   });
 
   const isOpen = state.findIndex((it) => it == item.title);
-  const commonClasses = cn("hover:bg-gray-50 cursor-pointer rounded-md");
+  const commonClasses = cn("hover:bg-gray-200 cursor-pointer rounded-md");
 
   const handleCollapseTriggerClick = () => {
     onOutlineStateChange(item);
