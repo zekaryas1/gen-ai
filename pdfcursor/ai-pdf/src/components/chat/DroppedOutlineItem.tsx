@@ -1,4 +1,6 @@
 import { DraggableOutlineItemData } from "@/models/OutlineItem";
+import { Button } from "@/components/ui/button";
+import { FileIcon, FilesIcon, Trash2Icon } from "lucide-react";
 
 interface DroppedOutlineItemListProps {
   draggableItemDataType: DraggableOutlineItemData;
@@ -12,15 +14,27 @@ export default function DroppedOutlineItem({
   return (
     <div
       key={draggableItemDataType.currentItem.title}
-      className={"bg-gray-200 p-2 flex gap-4"}
+      className={
+        "bg-gray-200 p-2 flex gap-4 items-center justify-between rounded-sm shadow-sm"
+      }
     >
-      <button onClick={onRemoveOutlineItemClick}>x</button>
-      <div className="flex flex-col">
+      <div className="flex gap-2 items-center">
+        <div>
+          {draggableItemDataType.isCurrentItemLeaf ? (
+            <FileIcon size={20} />
+          ) : (
+            <FilesIcon size={20} />
+          )}
+        </div>
         <p>{draggableItemDataType.currentItem.title}</p>
-        <span className="text-xs">
-          {draggableItemDataType.nextSiblingItem?.title}
-        </span>
       </div>
+      <Button
+        variant={"ghost"}
+        onClick={onRemoveOutlineItemClick}
+        size={"icon"}
+      >
+        <Trash2Icon />
+      </Button>
     </div>
   );
 }
