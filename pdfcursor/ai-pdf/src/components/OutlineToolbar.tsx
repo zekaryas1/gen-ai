@@ -8,7 +8,7 @@ export default function OutlineToolbar({ fileName }: { fileName: string }) {
   return (
     <div
       className={
-        "flex justify-between items-center border p-1.5 border-e-0 gap-4"
+        "flex justify-between items-center border p-1.5 border-e-0 gap-4 h-12"
       }
     >
       <Button

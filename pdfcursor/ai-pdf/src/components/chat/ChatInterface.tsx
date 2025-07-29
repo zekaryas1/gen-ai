@@ -76,7 +76,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
     >
       <div
         className={
-          "flex justify-between items-center p-1.5 border border-s-0 bg-white"
+          "flex flex-wrap px-2 py-2 xl:py-0 gap-2 justify-between items-center border border-s-0 bg-white min-h-12 xl:h-12"
         }
       >
         <p>Chat interface</p>
@@ -85,8 +85,10 @@ export default function ChatInterface(props: ChatInterfaceProps) {
             setMessages([]);
             onClearContextClick();
           }}
+          size={"sm"}
         >
-          <BrushCleaning /> Clear history
+          <BrushCleaning />
+          <span className={"hidden md:block"}>Clear history</span>
         </Button>
       </div>
       <div className={"flex-1 overflow-scroll p-3"}>

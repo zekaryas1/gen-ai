@@ -13,8 +13,10 @@ export default function PreviousFiles(props: PreviousFilesPropsType) {
       check={prevFiles.length > 0}
       ifShow={
         <>
-          <p>Previously opened files</p>
-          <div className={"grid grid-cols-4 gap-8"}>
+          <p className={"text-center"}>
+            Previously opened files(Just for history)
+          </p>
+          <div className={"flex flex-wrap justify-center gap-8"}>
             {prevFiles.map((pFile) => {
               return (
                 <div

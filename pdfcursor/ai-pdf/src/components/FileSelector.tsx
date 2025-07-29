@@ -8,7 +8,7 @@ export default function FileSelector(props: FileSelectorPropsType) {
   const { onFileChange } = props;
   return (
     <>
-      <label htmlFor="files" className="text-2xl">
+      <label htmlFor="files" className="text-2xl text-center mb-1.5">
         PDF + AI
       </label>
       <Input
