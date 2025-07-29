@@ -1,6 +1,14 @@
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
-import { RefObject, useCallback, useContext, useMemo, useState } from "react";
+import {
+  RefObject,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import Toolbar from "@/components/Toolbar";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
@@ -25,6 +33,8 @@ import OutlineToolbar from "@/components/OutlineToolbar";
 //pdf js css
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import { useResizeObserver } from "@/hooks/useResizeObserver";
+import { ImperativePanelGroupHandle } from "react-resizable-panels";
 
 interface PDFLayoutProps {
   pdf: PDFDocumentProxy;
@@ -36,6 +46,16 @@ interface PDFLayoutProps {
     state: string[];
   };
   updateLastVisitedPage: (newPage: number) => void;
+  panelOptions: {
+    left: {
+      defaultSize: number;
+      maxSize: number;
+    };
+    right: {
+      defaultSize: number;
+      maxSize: number;
+    };
+  };
 }
 
 // Worker setup
@@ -52,17 +72,9 @@ export default function PDFLayout(props: PDFLayoutProps) {
     lastPagePosition,
     outlineData,
     fileName,
+    panelOptions,
   } = props;
   const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
-  const [sidebarsToggle, setSidebarToggle] = useState({
-    showOutline: true,
-    showChat: true,
-  });
-
-  const pagesUtilityManager = useMemo(
-    () => new PagesUtilityManager(pdf),
-    [pdf],
-  );
   //drag and drop conf
   const [droppedItemData, setDroppedItemData] = useState<
     DraggableOutlineItemData[]
@@ -70,8 +82,20 @@ export default function PDFLayout(props: PDFLayoutProps) {
   const [activeDragItem, setActiveDragItem] =
     useState<DraggableOutlineItemData | null>(null);
 
+  const previousStateHolder = useRef<number[]>([20, 25]);
+  const panelGroupRef = useRef<ImperativePanelGroupHandle>(null);
+  const middleResizeContainerRef = useRef<HTMLDivElement>(null);
+
+  const width = useResizeObserver(middleResizeContainerRef);
+
+  const pagesUtilityManager = useMemo(
+    () => new PagesUtilityManager(pdf),
+    [pdf],
+  );
   //api key
   const value = useContext(ApiKeyContext);
+
+  useEffect(() => {}, []);
 
   const updatePageNumber = useCallback(
     (newPageNumber: number) => {
@@ -137,44 +161,58 @@ export default function PDFLayout(props: PDFLayoutProps) {
     [updateLastVisitedPage],
   );
 
-  const handleOutlineStateChange = useCallback((outlineStates: string[]) => {
-    pdfUtilityManager.replaceOutlineState(fileName, outlineStates);
-  }, []);
+  const handleOutlineStateChange = useCallback(
+    (outlineStates: string[]) => {
+      pdfUtilityManager.replaceOutlineState(fileName, outlineStates);
+    },
+    [fileName],
+  );
 
-  const handleToggleChatSidebar = useCallback(() => {
-    setSidebarToggle((prevState) => {
-      return {
-        ...prevState,
-        showChat: !prevState.showChat,
-      };
-    });
-  }, []);
+  const handleHandleDoubleClick = (side: "left" | "right") => {
+    const panelGroup = panelGroupRef.current;
+    if (!panelGroup) return;
 
-  const handleToggleOutlineSidebar = useCallback(() => {
-    setSidebarToggle((prevState) => {
-      return {
-        ...prevState,
-        showOutline: !prevState.showOutline,
-      };
-    });
-  }, []);
+    const layout = panelGroup.getLayout();
+    const isLeft = side === "left";
+    const index = isLeft ? 0 : 2;
+    const currentSize = Math.floor(layout[index]);
+
+    if (currentSize === 0) {
+      const prevSize = previousStateHolder.current[isLeft ? 0 : 1];
+      const adjustedMiddle = layout[1] - prevSize + 0.2;
+      const newLayout: number[] = isLeft
+        ? [prevSize, adjustedMiddle, layout[2]]
+        : [layout[0], adjustedMiddle, prevSize];
+
+      panelGroup.setLayout(newLayout);
+    } else {
+      previousStateHolder.current[isLeft ? 0 : 1] = layout[index];
+      const adjustedMiddle = layout[1] + layout[index] - 0.2;
+      const newLayout: number[] = isLeft
+        ? [0.2, adjustedMiddle, layout[2]]
+        : [layout[0], adjustedMiddle, 0.2];
+
+      panelGroup.setLayout(newLayout);
+    }
+  };
+
+  const handleLeftHandleDoubleClick = () => handleHandleDoubleClick("left");
+  const handleRightHandleDoubleClick = () => handleHandleDoubleClick("right");
 
   return (
     <DndWrapper onItemDragStart={handleDragStart} onItemDragEnd={handleDragEnd}>
       <ResizablePanelGroup
         autoSaveId="conditional"
         direction="horizontal"
-        className={""}
+        ref={panelGroupRef}
       >
         <>
           <ResizablePanel
-            defaultSize={20}
-            minSize={20}
-            maxSize={30}
+            defaultSize={panelOptions.left.defaultSize}
+            maxSize={panelOptions.left.maxSize}
             className={"bg-white"}
             id={"left"}
             order={1}
-            hidden={!sidebarsToggle.showOutline}
           >
             <div className={"relative overflow-scroll h-svh flex flex-col"}>
               <OutlineToolbar fileName={fileName} />
@@ -196,50 +234,58 @@ export default function PDFLayout(props: PDFLayoutProps) {
               />
             </div>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle
+            withHandle
+            onDoubleClick={handleLeftHandleDoubleClick}
+          />
         </>
         <ResizablePanel
           className={"h-svh overflow-scroll"}
           id={"middle"}
           order={2}
         >
-          <>
+          <div ref={middleResizeContainerRef}>
             <Toolbar
               pageNumber={currentPageNumber}
               totalPages={pdf.numPages}
               onPageChange={updatePageNumber}
-              onToggleChat={handleToggleChatSidebar}
-              onToggleOutline={handleToggleOutlineSidebar}
             />
 
-            <Virtuoso
-              ref={virtuosoRef}
-              style={{ height: "95svh" }}
-              totalCount={pdf.numPages}
-              overscan={10}
-              id={"pdf-container"}
-              components={{
-                ScrollSeekPlaceholder: ScrollPlaceHolder,
-              }}
-              initialTopMostItemIndex={Math.max(0, lastPagePosition - 1)}
-              itemContent={(index) => (
-                <PDFPageWrapper
-                  pageNumber={index + 1}
-                  pageChangeListener={handlePageChange}
+            <Conditional
+              check={width != 0}
+              ifShow={
+                <Virtuoso
+                  ref={virtuosoRef}
+                  style={{ height: "calc(100svh - var(--spacing) * 12)" }}
+                  totalCount={pdf.numPages}
+                  overscan={10}
+                  id={"pdf-container"}
+                  components={{
+                    ScrollSeekPlaceholder: ScrollPlaceHolder,
+                  }}
+                  initialTopMostItemIndex={Math.max(0, lastPagePosition - 1)}
+                  itemContent={(index) => (
+                    <PDFPageWrapper
+                      pageNumber={index + 1}
+                      width={width}
+                      pageChangeListener={handlePageChange}
+                    />
+                  )}
                 />
-              )}
+              }
             />
-          </>
+          </div>
         </ResizablePanel>
-        <ResizableHandle withHandle />
+        <ResizableHandle
+          withHandle
+          onDoubleClick={handleRightHandleDoubleClick}
+        />
         <ResizablePanel
-          defaultSize={25}
-          minSize={25}
-          maxSize={35}
+          defaultSize={panelOptions.right.defaultSize}
+          maxSize={panelOptions.right.maxSize}
           className={"h-svh overflow-hidden bg-white"}
           id={"right"}
           order={3}
-          hidden={!sidebarsToggle.showChat}
         >
           <Conditional
             check={value.apiKey}

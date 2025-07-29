@@ -1,48 +1,31 @@
-import { useEffect, useRef } from "react";
 import { Page } from "react-pdf";
 import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
+import { usePageVisibilityObserver } from "@/hooks/usePageVisibilityObserver";
 
-export default function PDFPageWrapper(props: {
+interface PDFPageWrapperPropTypes {
   pageNumber: number;
   pageChangeListener: (pageNumber: number) => void;
-}) {
-  const { pageChangeListener, pageNumber } = props;
-  const ref = useRef(null);
-  const PAGE_VISIBILITY_THRESHOLD = 0.5;
+  width: number;
+}
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          entry.intersectionRatio > PAGE_VISIBILITY_THRESHOLD
-        ) {
-          pageChangeListener(pageNumber);
-        }
-      },
-      {
-        root: document.getElementById("pdf-container"),
-        threshold: [0, 0.25, 0.5, 0.75, 1.0],
-      },
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-    return () => {
-      observer.disconnect();
-    };
+export default function PDFPageWrapper(props: PDFPageWrapperPropTypes) {
+  const { pageChangeListener, pageNumber, width } = props;
+  const pageRef = usePageVisibilityObserver({
+    rootId: "pdf-container",
+    visibilityThreshold: 0.5,
+    onPageVisible: () => pageChangeListener(pageNumber),
   });
+
   return (
-    <div>
+    <>
       <Page
-        inputRef={ref}
+        inputRef={pageRef}
         key={`page_${pageNumber}`}
         pageNumber={pageNumber}
-        width={950}
+        width={width}
         loading={ScrollPlaceHolder}
       />
       <p className={"bg-black text-white text-center"}>{pageNumber}</p>
-    </div>
+    </>
   );
 }

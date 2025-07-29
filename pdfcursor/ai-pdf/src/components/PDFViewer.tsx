@@ -21,6 +21,16 @@ export default function PDFViewer(props: PDFViewerPropsType) {
   const outlineRef = useRef<OutlineItem[]>([]);
   const lastPagePositionRef = useRef<number>(1);
   const outlineStateRef = useRef<string[]>([]);
+  const panelOptions = useRef({
+    left: {
+      defaultSize: 20,
+      maxSize: 25,
+    },
+    right: {
+      defaultSize: 25,
+      maxSize: 30,
+    },
+  });
   const [pdfReady, setPdfReady] = useState(false);
 
   const handleLoadSuccess = useCallback(
@@ -33,6 +43,20 @@ export default function PDFViewer(props: PDFViewerPropsType) {
       lastPagePositionRef.current =
         pdfUtilityManager.getLastVisitedPage(fileName);
       outlineStateRef.current = pdfUtilityManager.getOutlineState(fileName);
+
+      //is mobile
+      if (window.innerWidth < 768) {
+        panelOptions.current = {
+          left: {
+            defaultSize: 0.2,
+            maxSize: 55,
+          },
+          right: {
+            defaultSize: 0.2,
+            maxSize: 55,
+          },
+        };
+      }
 
       setPdfReady(true);
       await pdfUtilityManager.saveInitialHistory(doc, fileName);
@@ -73,6 +97,7 @@ export default function PDFViewer(props: PDFViewerPropsType) {
                 state: outlineStateRef.current,
               }}
               updateLastVisitedPage={handleUpdateLastVisitedPage}
+              panelOptions={panelOptions.current}
             />
           </ApiKeyContextProvider>
         }
