@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { ChevronRight } from "lucide-react";
 import { SidebarMenuSub } from "@/components/ui/sidebar";
 import {
@@ -83,8 +83,11 @@ function Tree(props: TreeProps) {
     } as DraggableOutlineItemData,
   });
 
-  const isOpen = state.findIndex((it) => it == item.title);
-  const commonClasses = cn("hover:bg-gray-200 cursor-pointer rounded-md");
+  const isOpen = useMemo(
+    () => state.findIndex((it) => it == item.title),
+    [item.title, state],
+  );
+  const commonClasses = "hover:bg-gray-200 cursor-pointer rounded-md";
 
   const handleCollapseTriggerClick = () => {
     onOutlineStateChange(item);
