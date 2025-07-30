@@ -10,7 +10,9 @@ import { streamText } from "ai";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BrushCleaning, Send } from "lucide-react";
-import { FormEvent } from "react";
+import { FormEvent, useCallback } from "react";
+import { getSystemPrompt } from "@/utils/constants.utils";
+import { cn } from "@/lib/utils";
 
 interface ChatInterfaceProps {
   plainApiKey: string;
@@ -43,7 +45,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
 
         const result = streamText({
           model: google("gemini-2.0-flash"),
-          system: `You are a helpful assistant. When answering questions, always prioritize and use the provided context first. Only rely on your own knowledge if the context is insufficient. Keep your responses concise, clear, and to the point. ${context}`,
+          system: getSystemPrompt(context),
           messages,
         });
 
@@ -69,9 +71,17 @@ export default function ChatInterface(props: ChatInterfaceProps) {
     });
   };
 
+  const handleClearHistoryClick = useCallback(() => {
+    setMessages([]);
+    onClearContextClick();
+  }, [onClearContextClick, setMessages]);
+
   return (
     <div
-      className={`flex flex-col h-full bg-gray-50 ${isOver ? "border-yellow-300 bg-yellow-50" : "border-gray-300"}`}
+      className={cn(
+        `flex flex-col h-full bg-gray-50`,
+        isOver ? "border-yellow-300 bg-yellow-50" : "border-gray-300",
+      )}
       ref={setNodeRef}
     >
       <div
@@ -80,13 +90,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
         }
       >
         <p>Chat interface</p>
-        <Button
-          onClick={() => {
-            setMessages([]);
-            onClearContextClick();
-          }}
-          size={"sm"}
-        >
+        <Button onClick={handleClearHistoryClick} size={"sm"}>
           <BrushCleaning />
           <span className={"hidden md:block"}>Clear history</span>
         </Button>

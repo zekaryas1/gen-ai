@@ -1,4 +1,6 @@
 import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { CopyIcon } from "lucide-react";
 
 interface CodeBlockProps {
   language: string;
@@ -16,14 +18,19 @@ export default function CodeBlock(props: CodeBlockProps) {
 
   return (
     <>
-      <div className={"flex justify-between mb-2.5"}>
-        <div className={"bg-gray-200 rounded-md p-2"}>{language}</div>
-        <button
-          className={"bg-gray-200 rounded-md p-2"}
+      <div
+        className={
+          "flex justify-between mb-2.5 border-b-1 border-b-gray-200 items-center"
+        }
+      >
+        <p>{language}</p>
+        <Button
           onClick={() => copyToClipboard()}
+          variant={"ghost"}
+          size={"icon"}
         >
-          copy
-        </button>
+          <CopyIcon />
+        </Button>
       </div>
       <code ref={ref}>{children}</code>
     </>

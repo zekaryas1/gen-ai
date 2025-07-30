@@ -1,10 +1,18 @@
-import { useContext, useState } from "react";
+import { ChangeEvent, useContext, useState } from "react";
 import { Conditional } from "@/components/ConditionalRenderer";
 import { encryptionManager } from "@/utils/encryption.utils";
 import { ApiKeyContext } from "@/utils/ApiKeyContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileKey2, Save } from "lucide-react";
+
+interface ApiKeyPasswordFormPropType {
+  onDecryptAction: (formData: FormData) => void;
+}
+
+interface ApiKeyNewFormPropType {
+  onSaveAction: (formData: FormData) => void;
+}
 
 export default function APIKeyPromptForm() {
   const value = useContext(ApiKeyContext);
@@ -72,11 +80,8 @@ export default function APIKeyPromptForm() {
   );
 }
 
-function ApiKeyPasswordForm({
-  onDecryptAction,
-}: {
-  onDecryptAction: (formData: FormData) => void;
-}) {
+function ApiKeyPasswordForm(props: ApiKeyPasswordFormPropType) {
+  const { onDecryptAction } = props;
   return (
     <div className={"space-y-1.5"}>
       <p>Please provide the password to decrypt the api key</p>
@@ -95,20 +100,20 @@ function ApiKeyPasswordForm({
   );
 }
 
-function ApiKeyNewForm({
-  onSaveAction,
-}: {
-  onSaveAction: (formData: FormData) => void;
-}) {
+function ApiKeyNewForm(props: ApiKeyNewFormPropType) {
+  const { onSaveAction } = props;
   const [storeType, setStoreType] = useState<string>("temporary");
+
+  const handleStoreTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    setStoreType(value);
+  };
 
   return (
     <div className={"p-3 space-y-1.5"}>
       <div>
-        <p className={"text-lg font-bold"}>You do not have api key</p>
-        <p>
-          Please provide google api key and password to securely store on web
-        </p>
+        <p className={"text-lg font-bold"}>Please provide API key</p>
+        <p>Please provide Google Gemini API key to connect to your AI model.</p>
       </div>
       <form className={"flex flex-col gap-2"} action={onSaveAction}>
         <Input
@@ -118,16 +123,12 @@ function ApiKeyNewForm({
           required
         />
 
-        <select
-          onChange={(event) => {
-            const value = event.target.value;
-            setStoreType(value);
-          }}
-          name={"storeType"}
-        >
-          <option value={"temporary"}>Store temporarily: until refresh</option>
+        <select onChange={handleStoreTypeChange} name={"storeType"}>
+          <option value={"temporary"}>
+            Store temporarily: until this page close
+          </option>
           <option value={"permanent"}>
-            Store permanent: secure local storage
+            Store permanent: encrypted local storage
           </option>
         </select>
 
