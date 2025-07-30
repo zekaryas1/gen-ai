@@ -8,6 +8,7 @@ import PDFLayout from "@/components/PDFLayout";
 import { pdfUtilityManager } from "@/utils/files.utils";
 import { ApiKeyContextProvider } from "@/utils/ApiKeyContext";
 import {
+  APP_NAME,
   MOBILE_BREAKPOINT,
   RESIZABLE_PANEL_DESKTOP_OPTIONS,
   RESIZABLE_PANEL_MOBILE_OPTIONS,
@@ -47,6 +48,9 @@ export default function PDFViewer(props: PDFViewerPropsType) {
       ]);
 
       pdfRef.current = pdfDoc;
+
+      //set document title as filename
+      document.title = `${fileName} - ${APP_NAME}´`;
 
       pdfStateRef.current = {
         fileName,

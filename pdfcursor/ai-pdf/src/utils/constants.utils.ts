@@ -3,6 +3,8 @@ export const PREVIOUS_FILES_STORAGE_KEY = "previous_files";
 
 export const MOBILE_BREAKPOINT = 768;
 
+export const APP_NAME = "AKU-AI-PDF";
+
 export const RESIZABLE_PANEL_DESKTOP_OPTIONS = {
   left: {
     defaultSize: 20,
@@ -39,3 +41,29 @@ ${context}
 </context>
   `;
 };
+
+export const APP_FEATURE_MESSAGES = [
+  {
+    title: "Offline PDF Reader",
+    description: "View PDFs without an internet connection or downloads.",
+  },
+  {
+    title: "Essential Reader Features",
+    description: "Easily navigate with outlines and page controls.",
+  },
+  {
+    title: "AI-Powered Interaction",
+    description:
+      "Chat with your PDF, get explanations, take quizzes, or generate notes as you read.",
+  },
+  {
+    title: "Customizable Context",
+    description:
+      "Add more context by dragging and dropping outlines to expand your AI conversations.",
+  },
+  {
+    title: "Local",
+    description:
+      "Bring your own Google API key for AI features—no backend connection, all data stays local.",
+  },
+];

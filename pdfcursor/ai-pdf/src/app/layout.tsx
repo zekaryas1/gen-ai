@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { APP_NAME } from "@/utils/constants.utils";
 
-const geistSans = Geist({
+const geistSans = {
   variable: "--font-geist-sans",
   subsets: ["latin"],
-});
+};
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PDF Cursor",
+  title: APP_NAME,
   description:
     "A web based PDF reader with AI integration, open-source, offline and custom api key",
 };

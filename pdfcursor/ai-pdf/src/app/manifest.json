@@ -1,6 +1,6 @@
 {
-  "name": "PDF Cursor",
-  "short_name": "PDF",
+  "name": "AKU-AI-PDF",
+  "short_name": "AKU",
   "description": "A PDF reader with AI integration",
   "start_url": "/",
   "display": "standalone",
