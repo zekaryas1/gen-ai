@@ -13,14 +13,25 @@ import PDFViewer from "@/components/PDFViewer";
 import { pdfUtilityManager } from "@/utils/files.utils";
 import { LocalStorageFile } from "@/models/File";
 
+interface PrevFileStateType {
+  isComplete: boolean;
+  result: LocalStorageFile[];
+}
+
 export default function Home() {
   const fileRef = useRef<File>(null);
   const [showPDF, setShowPDF] = useState(false);
-  const [prevFiles, setPrevFiles] = useState<LocalStorageFile[]>([]);
+  const [prevFilesState, setPrevFilesState] = useState<PrevFileStateType>({
+    isComplete: false,
+    result: [],
+  });
 
   useEffect(() => {
     startTransition(() => {
-      setPrevFiles(pdfUtilityManager.getPreviousFiles());
+      setPrevFilesState({
+        isComplete: true,
+        result: pdfUtilityManager.getPreviousFiles(),
+      });
     });
   }, [showPDF]);
 
@@ -60,7 +71,10 @@ export default function Home() {
               <FileSelector onFileChange={handleFileChange} />
             </div>
             <div className={"space-y-1.5"}>
-              <PreviousFiles prevFiles={prevFiles} />
+              <PreviousFiles
+                prevFiles={prevFilesState.result}
+                complete={prevFilesState.isComplete}
+              />
             </div>
           </div>
         </div>
