@@ -3,6 +3,7 @@ import {
   startTransition,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -12,6 +13,8 @@ import PreviousFiles from "@/components/PreviousFiles";
 import PDFViewer from "@/components/PDFViewer";
 import { pdfUtilityManager } from "@/utils/files.utils";
 import { LocalStorageFile } from "@/models/File";
+import AppFeatureMessages from "@/components/AppFeatureMessages";
+import SelfPromotionBanner from "@/components/SelfPromotionBanner";
 
 interface PrevFileStateType {
   isComplete: boolean;
@@ -25,6 +28,11 @@ export default function Home() {
     isComplete: false,
     result: [],
   });
+
+  const noPreviousPDFHistory = useMemo(
+    () => prevFilesState.isComplete && prevFilesState.result.length == 0,
+    [prevFilesState.isComplete, prevFilesState.result.length],
+  );
 
   useEffect(() => {
     startTransition(() => {
@@ -66,16 +74,21 @@ export default function Home() {
       ifShow={<PDFViewer file={fileRef.current!} />}
       elseShow={
         <div className={"container mx-auto flex justify-center pt-52"}>
-          <div className={"space-y-8"}>
+          <div className={"space-y-4"}>
             <div className={"grid place-content-center space-x-2.5"}>
               <FileSelector onFileChange={handleFileChange} />
             </div>
             <div className={"space-y-1.5"}>
-              <PreviousFiles
-                prevFiles={prevFilesState.result}
-                complete={prevFilesState.isComplete}
+              <Conditional
+                check={noPreviousPDFHistory}
+                ifShow={<AppFeatureMessages />}
+                elseShow={<PreviousFiles prevFiles={prevFilesState.result} />}
               />
             </div>
+            <SelfPromotionBanner
+              name={"Zekaryas Tadele"}
+              link={"https://github.com/zerkaryas1"}
+            />
           </div>
         </div>
       }
