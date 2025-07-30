@@ -1,268 +1,243 @@
+import type { RefObject } from "react";
+import { useCallback, useContext, useMemo, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
-import {
-  RefObject,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import Toolbar from "@/components/Toolbar";
-import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
-import PDFPageWrapper from "@/components/PDFPageWrapper";
-import ChatInterface from "@/components/chat/ChatInterface";
-import { Conditional } from "@/components/ConditionalRenderer";
 import { pdfjs } from "react-pdf";
-import DndWrapper from "@/components/DndWrapper";
-import { PagesUtilityManager } from "@/utils/page.utils";
-import { ApiKeyContext } from "@/utils/ApiKeyContext";
+
+import PDFToolbar from "@/components/PDFToolbar";
+import PDFPageWrapper from "@/components/PDFPageWrapper";
+import OutlineRenderer from "@/components/OutlineRenderer";
+import OutlineToolbar from "@/components/OutlineToolbar";
+import ChatInterface from "@/components/chat/ChatInterface";
 import APIKeyPromptForm from "@/components/chat/APIKeyPromptForm";
+import ScrollPlaceHolder from "@/components/ScrollPlaceHolder";
+import DndWrapper from "@/components/DndWrapper";
+import { Conditional } from "@/components/ConditionalRenderer";
 import OutlineItemDragOverlay from "@/components/OutlineItemDragOverlay";
+
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import OutlineRenderer from "@/components/OutlineRenderer";
-import { pdfUtilityManager } from "@/utils/files.utils";
-import OutlineToolbar from "@/components/OutlineToolbar";
 
-//pdf js css
+import { ApiKeyContext } from "@/utils/ApiKeyContext";
+import { useResizeObserver } from "@/hooks/useResizeObserver";
+import { PagesUtilityManager } from "@/utils/page.utils";
+import { pdfUtilityManager } from "@/utils/files.utils";
+import { resizePanelUtils } from "@/utils/resizePanel.utils";
+
+import type { PdfStateType } from "@/models/File";
+import type {
+  DraggableOutlineItemData,
+  OutlineItem,
+} from "@/models/OutlineItem";
+import type { ImperativePanelGroupHandle } from "react-resizable-panels";
+
+//PDF js css
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { useResizeObserver } from "@/hooks/useResizeObserver";
-import { ImperativePanelGroupHandle } from "react-resizable-panels";
 
-interface PDFLayoutProps {
-  pdf: PDFDocumentProxy;
-  virtuosoRef: RefObject<VirtuosoHandle | null>;
-  fileName: string;
-  lastPagePosition: number;
-  outlineData: {
-    outline: OutlineItem[];
-    state: string[];
-  };
-  updateLastVisitedPage: (newPage: number) => void;
-  panelOptions: {
-    left: {
-      defaultSize: number;
-      maxSize: number;
-    };
-    right: {
-      defaultSize: number;
-      maxSize: number;
-    };
-  };
-}
-
-// Worker setup
+// PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
 
-export default function PDFLayout(props: PDFLayoutProps) {
-  const {
-    pdf,
-    virtuosoRef,
-    updateLastVisitedPage,
-    lastPagePosition,
-    outlineData,
-    fileName,
-    panelOptions,
-  } = props;
-  const [currentPageNumber, setCurrentPageNumber] = useState<number>(0);
-  //drag and drop conf
-  const [droppedItemData, setDroppedItemData] = useState<
-    DraggableOutlineItemData[]
-  >([]);
-  const [activeDragItem, setActiveDragItem] =
-    useState<DraggableOutlineItemData | null>(null);
+interface PDFLayoutProps {
+  pdf: PDFDocumentProxy;
+  virtuosoRef: RefObject<VirtuosoHandle | null>;
+  state: PdfStateType;
+}
 
-  const previousStateHolder = useRef<number[]>([20, 25]);
+interface DragStateType {
+  activeDragItem: DraggableOutlineItemData | null;
+  droppedItems: DraggableOutlineItemData[];
+}
+
+export default function PDFLayout({ pdf, virtuosoRef, state }: PDFLayoutProps) {
+  const { panelOptions, lastPagePosition, fileName, outline, outlineState } =
+    state;
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [dragState, setDragState] = useState<DragStateType>({
+    activeDragItem: null,
+    droppedItems: [],
+  });
+
   const panelGroupRef = useRef<ImperativePanelGroupHandle>(null);
-  const middleResizeContainerRef = useRef<HTMLDivElement>(null);
+  const previousLayoutRef = useRef<number[]>([
+    panelOptions.left.defaultSize,
+    panelOptions.right.defaultSize,
+  ]);
+  const middlePanelRef = useRef<HTMLDivElement>(null);
+  const width = useResizeObserver(middlePanelRef);
 
-  const width = useResizeObserver(middleResizeContainerRef);
+  const pagesManager = useMemo(() => new PagesUtilityManager(pdf), [pdf]);
+  const { apiKey } = useContext(ApiKeyContext);
 
-  const pagesUtilityManager = useMemo(
-    () => new PagesUtilityManager(pdf),
-    [pdf],
-  );
-  //api key
-  const value = useContext(ApiKeyContext);
-
-  useEffect(() => {}, []);
-
-  const updatePageNumber = useCallback(
-    (newPageNumber: number) => {
-      virtuosoRef.current?.scrollToIndex({ index: newPageNumber });
-    },
+  // Navigation
+  const updatePage = useCallback(
+    (page: number) => virtuosoRef.current?.scrollToIndex({ index: page }),
     [virtuosoRef],
   );
 
-  const outlineScrollToPage = useCallback(
+  const scrollToOutlineItemDest = useCallback(
     async (item: OutlineItem) => {
-      const pageIndex =
-        await pagesUtilityManager.getOutlineItemPageNumber(item);
-      updatePageNumber(pageIndex);
+      const index = await pagesManager.getOutlineItemPageNumber(item);
+      updatePage(index);
     },
-    [pagesUtilityManager, updatePageNumber],
+    [pagesManager, updatePage],
   );
-
-  const handleDragStart = useCallback((item: DraggableOutlineItemData) => {
-    setActiveDragItem(item);
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (item: DraggableOutlineItemData) => {
-      const existsPrevious = droppedItemData.findIndex(
-        (it) => it.currentItem.title === item.currentItem.title,
-      );
-      if (existsPrevious == -1) {
-        setDroppedItemData([item, ...droppedItemData]);
-      }
-      setActiveDragItem(null);
-    },
-    [droppedItemData],
-  );
-
-  const handleRemoveDroppedItem = useCallback(
-    (item: DraggableOutlineItemData) => {
-      setDroppedItemData((prev) =>
-        prev.filter((it) => it.currentItem.title !== item.currentItem.title),
-      );
-    },
-    [],
-  );
-
-  const getTextContext = useCallback(async () => {
-    const outlinePages =
-      await pagesUtilityManager.outlineItemsToPageConverter(droppedItemData);
-    return await pagesUtilityManager.getTextContext([
-      ...outlinePages,
-      currentPageNumber,
-    ]);
-  }, [currentPageNumber, droppedItemData, pagesUtilityManager]);
-
-  const chatClearHistory = useCallback(() => {
-    pagesUtilityManager.clearVisitedPages();
-    setDroppedItemData([]);
-  }, [pagesUtilityManager]);
 
   const handlePageChange = useCallback(
-    (pageNumber: number) => {
-      updateLastVisitedPage(pageNumber);
-      setCurrentPageNumber(pageNumber);
-    },
-    [updateLastVisitedPage],
-  );
-
-  const handleOutlineStateChange = useCallback(
-    (outlineStates: string[]) => {
-      pdfUtilityManager.replaceOutlineState(fileName, outlineStates);
+    (page: number) => {
+      setCurrentPage(page);
+      pdfUtilityManager.updateLastVisitedPage(fileName, page);
     },
     [fileName],
   );
 
-  const handleHandleDoubleClick = (side: "left" | "right") => {
-    const panelGroup = panelGroupRef.current;
-    if (!panelGroup) return;
+  const handleOutlineStateChange = useCallback(
+    (states: string[]) => {
+      pdfUtilityManager.replaceOutlineState(fileName, states);
+    },
+    [fileName],
+  );
 
-    const layout = panelGroup.getLayout();
-    const isLeft = side === "left";
-    const index = isLeft ? 0 : 2;
-    const currentSize = Math.floor(layout[index]);
+  // Drag and Drop
+  const handleDragStart = useCallback((item: DraggableOutlineItemData) => {
+    setDragState((prevState) => {
+      return {
+        ...prevState,
+        activeDragItem: item,
+      };
+    });
+  }, []);
 
-    if (currentSize === 0) {
-      const prevSize = previousStateHolder.current[isLeft ? 0 : 1];
-      const adjustedMiddle = layout[1] - prevSize + 0.2;
-      const newLayout: number[] = isLeft
-        ? [prevSize, adjustedMiddle, layout[2]]
-        : [layout[0], adjustedMiddle, prevSize];
+  const handleDragEnd = useCallback(
+    (item: DraggableOutlineItemData) => {
+      //no duplicate items
+      if (
+        dragState.droppedItems.findIndex(
+          (i) => i.currentItem.title === item.currentItem.title,
+        ) == -1
+      ) {
+        setDragState((prevState) => {
+          return {
+            ...prevState,
+            droppedItems: [item, ...prevState.droppedItems],
+          };
+        });
+      }
+      setDragState((prevState) => {
+        return {
+          ...prevState,
+          activeDragItem: null,
+        };
+      });
+    },
+    [dragState.droppedItems],
+  );
 
-      panelGroup.setLayout(newLayout);
-    } else {
-      previousStateHolder.current[isLeft ? 0 : 1] = layout[index];
-      const adjustedMiddle = layout[1] + layout[index] - 0.2;
-      const newLayout: number[] = isLeft
-        ? [0.2, adjustedMiddle, layout[2]]
-        : [layout[0], adjustedMiddle, 0.2];
+  const removeDroppedItem = useCallback((item: DraggableOutlineItemData) => {
+    setDragState((prevState) => {
+      return {
+        ...prevState,
+        droppedItems: prevState.droppedItems.filter(
+          (i) => i.currentItem.title !== item.currentItem.title,
+        ),
+      };
+    });
+  }, []);
 
-      panelGroup.setLayout(newLayout);
+  // Chat
+  const getContext = useCallback(async () => {
+    const pages = await pagesManager.outlineItemsToPageConverter(
+      dragState.droppedItems,
+    );
+    return pagesManager.getTextContext([...pages, currentPage]);
+  }, [currentPage, dragState.droppedItems, pagesManager]);
+
+  const clearChatContext = useCallback(() => {
+    pagesManager.clearVisitedPages();
+    setDragState((prevState) => {
+      return {
+        ...prevState,
+        droppedItems: [],
+      };
+    });
+  }, [pagesManager]);
+
+  // Panel Resize Handlers
+  const panelDoubleClickHandle = useCallback((side: "left" | "right") => {
+    if (panelGroupRef.current) {
+      const layout = panelGroupRef.current.getLayout();
+      const newLayout = resizePanelUtils.transformLayout(
+        side,
+        layout,
+        previousLayoutRef.current,
+      );
+      panelGroupRef.current.setLayout(newLayout);
     }
-  };
-
-  const handleLeftHandleDoubleClick = () => handleHandleDoubleClick("left");
-  const handleRightHandleDoubleClick = () => handleHandleDoubleClick("right");
+  }, []);
 
   return (
     <DndWrapper onItemDragStart={handleDragStart} onItemDragEnd={handleDragEnd}>
       <ResizablePanelGroup
-        autoSaveId="conditional"
         direction="horizontal"
         ref={panelGroupRef}
+        autoSaveId="pdf-layout"
       >
+        {/* Left Panel - Outline */}
         <>
           <ResizablePanel
             defaultSize={panelOptions.left.defaultSize}
             maxSize={panelOptions.left.maxSize}
-            className={"bg-white"}
-            id={"left"}
+            className="bg-white overflow-scroll flex flex-col h-svh"
+            id="left"
             order={1}
           >
-            <div className={"relative overflow-scroll h-svh flex flex-col"}>
-              <OutlineToolbar fileName={fileName} />
-              <Conditional
-                check={outlineData.outline.length > 0}
-                ifShow={
-                  <>
-                    <OutlineRenderer
-                      items={outlineData.outline}
-                      state={outlineData.state}
-                      onNavigate={outlineScrollToPage}
-                      onReceiveStateChange={handleOutlineStateChange}
-                    />
-                  </>
-                }
-                elseShow={
-                  <p className="text-gray-500 text-sm">Outline Unavailable</p>
-                }
-              />
-            </div>
+            <OutlineToolbar fileName={fileName} />
+            <Conditional
+              check={outline.length > 0}
+              ifShow={
+                <OutlineRenderer
+                  items={outline}
+                  state={outlineState}
+                  onNavigate={scrollToOutlineItemDest}
+                  onReceiveStateChange={handleOutlineStateChange}
+                />
+              }
+              elseShow={
+                <p className="text-sm text-gray-500">Outline Unavailable</p>
+              }
+            />
           </ResizablePanel>
           <ResizableHandle
             withHandle
-            onDoubleClick={handleLeftHandleDoubleClick}
+            onDoubleClick={() => panelDoubleClickHandle("left")}
           />
         </>
-        <ResizablePanel
-          className={"h-svh overflow-scroll"}
-          id={"middle"}
-          order={2}
-        >
-          <div ref={middleResizeContainerRef}>
-            <Toolbar
-              pageNumber={currentPageNumber}
-              totalPages={pdf.numPages}
-              onPageChange={updatePageNumber}
-            />
 
+        {/* Middle Panel - PDF */}
+        <ResizablePanel id="middle" order={2} className="overflow-scroll h-svh">
+          <main ref={middlePanelRef}>
+            <PDFToolbar
+              pageNumber={currentPage}
+              totalPages={pdf.numPages}
+              onPageChange={updatePage}
+            />
             <Conditional
-              check={width != 0}
+              check={width > 0}
               ifShow={
                 <Virtuoso
                   ref={virtuosoRef}
                   style={{ height: "calc(100svh - var(--spacing) * 12)" }}
                   totalCount={pdf.numPages}
-                  overscan={10}
-                  id={"pdf-container"}
-                  components={{
-                    ScrollSeekPlaceholder: ScrollPlaceHolder,
-                  }}
+                  overscan={3}
+                  id="pdf-container"
+                  components={{ ScrollSeekPlaceholder: ScrollPlaceHolder }}
                   initialTopMostItemIndex={Math.max(0, lastPagePosition - 1)}
                   itemContent={(index) => (
                     <PDFPageWrapper
@@ -274,39 +249,41 @@ export default function PDFLayout(props: PDFLayoutProps) {
                 />
               }
             />
-          </div>
+          </main>
         </ResizablePanel>
         <ResizableHandle
           withHandle
-          onDoubleClick={handleRightHandleDoubleClick}
+          onDoubleClick={() => panelDoubleClickHandle("right")}
         />
+
+        {/* Right Panel - Chat */}
         <ResizablePanel
           defaultSize={panelOptions.right.defaultSize}
           maxSize={panelOptions.right.maxSize}
-          className={"h-svh overflow-hidden bg-white"}
-          id={"right"}
+          className="bg-white h-svh overflow-hidden"
+          id="right"
           order={3}
         >
           <Conditional
-            check={value.apiKey}
+            check={!!apiKey}
             ifShow={
               <ChatInterface
-                plainApiKey={value.apiKey}
-                droppedOutlineItems={droppedItemData}
-                getContext={getTextContext}
-                onClearContextClick={chatClearHistory}
-                onRemoveOutlineItemClick={handleRemoveDroppedItem}
+                plainApiKey={apiKey}
+                droppedOutlineItems={dragState.droppedItems}
+                getContext={getContext}
+                onClearContextClick={clearChatContext}
+                onRemoveOutlineItemClick={removeDroppedItem}
               />
             }
             elseShow={
-              <div className={"grid place-items-center h-full"}>
+              <div className="grid place-items-center h-full">
                 <APIKeyPromptForm />
               </div>
             }
           />
         </ResizablePanel>
       </ResizablePanelGroup>
-      <OutlineItemDragOverlay activeDragItem={activeDragItem} />
+      <OutlineItemDragOverlay activeDragItem={dragState.activeDragItem} />
     </DndWrapper>
   );
 }

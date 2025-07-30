@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Conditional } from "@/components/ConditionalRenderer";
 
 interface ToolbarProps {
@@ -7,19 +7,22 @@ interface ToolbarProps {
   onPageChange: (pageNumber: number) => void;
 }
 
-export default function Toolbar(props: ToolbarProps) {
+export default function PDFToolbar(props: ToolbarProps) {
   const { pageNumber, totalPages, onPageChange } = props;
   const [showPageInput, setShowPageInput] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const onEnterClick = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key == "Enter" && inputRef.current) {
-      const value = parseInt(inputRef.current.value);
-      if (value && Number.isInteger(value)) {
-        onPageChange(value - 1);
+  const onEnterClick = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key == "Enter" && inputRef.current) {
+        const value = parseInt(inputRef.current.value);
+        if (value && Number.isInteger(value)) {
+          onPageChange(value - 1);
+        }
       }
-    }
-  };
+    },
+    [onPageChange],
+  );
 
   const showPageNumberInput = () => setShowPageInput(true);
   const hidePageNumberInput = () => setShowPageInput(false);
