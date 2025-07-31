@@ -80,7 +80,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
     <div
       className={cn(
         `flex flex-col h-full bg-gray-50`,
-        isOver ? "border-yellow-300 bg-yellow-50" : "border-gray-300",
+        isOver ? "border-primary/50 bg-primary/10" : "border-gray-300",
       )}
       ref={setNodeRef}
     >
@@ -90,7 +90,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
         }
       >
         <p>Chat interface</p>
-        <Button onClick={handleClearHistoryClick} size={"sm"}>
+        <Button onClick={handleClearHistoryClick} size={"sm"} variant={"ghost"}>
           <BrushCleaning />
           <span className={"hidden md:block"}>Clear history</span>
         </Button>

@@ -94,7 +94,7 @@ function Tree(props: TreeProps) {
     () => state.findIndex((it) => it == item.title),
     [item.title, state],
   );
-  const commonClasses = "hover:bg-gray-200 cursor-pointer rounded-md";
+  const commonClasses = "hover:bg-primary/50 cursor-pointer rounded-md";
 
   const handleCollapseTriggerClick = () => {
     onOutlineStateChange(item);
@@ -109,7 +109,7 @@ function Tree(props: TreeProps) {
         className={cn(
           commonClasses,
           "block px-1.5 py-0.5 w-full",
-          isDragging && "bg-yellow-100",
+          isDragging && "bg-primary/50",
         )}
         onClick={() => onNavigate(item)}
       >
@@ -125,7 +125,7 @@ function Tree(props: TreeProps) {
       {...listeners}
       className={cn(
         "group/collapsible [&[data-state=open]>li>svg:first-child]:rotate-90",
-        isDragging && "bg-yellow-100",
+        isDragging && "bg-primary/50 rounded-md",
       )}
       defaultOpen={isOpen != -1}
     >

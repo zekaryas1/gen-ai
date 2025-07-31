@@ -113,7 +113,7 @@ function ApiKeyNewForm(props: ApiKeyNewFormPropType) {
     <div className={"p-3 space-y-1.5"}>
       <div>
         <p className={"text-lg font-bold"}>Please provide API key</p>
-        <p>Please provide Google Gemini API key to connect to your AI model.</p>
+        <p>Provide Google Gemini API key to connect to your AI model.</p>
       </div>
       <form className={"flex flex-col gap-2"} action={onSaveAction}>
         <Input
@@ -125,7 +125,7 @@ function ApiKeyNewForm(props: ApiKeyNewFormPropType) {
 
         <select onChange={handleStoreTypeChange} name={"storeType"}>
           <option value={"temporary"}>
-            Store temporarily: until this page close
+            Store temporarily: till this page closes
           </option>
           <option value={"permanent"}>
             Store permanent: encrypted local storage

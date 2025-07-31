@@ -9,8 +9,11 @@ export default function FileSelector(props: FileSelectorPropsType) {
   const { onFileChange } = props;
   return (
     <>
-      <label htmlFor="files" className="text-2xl text-center mb-1.5">
-        {APP_NAME}: <span className={"text-lg"}>PDF + AI</span>
+      <label
+        htmlFor="files"
+        className="text-2xl text-center mb-1.5 text-primary"
+      >
+        {APP_NAME}: <span className={"text-lg text-black"}>PDF + AI</span>
       </label>
       <Input
         id={"files"}
