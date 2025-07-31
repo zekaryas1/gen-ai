@@ -46,7 +46,7 @@ export default function OutlineRenderer(props: OutlineRendererProps) {
   );
 
   return (
-    <ul className="p-3 space-y-1.5 bg-gray-50 flex-1 overflow-y-scroll">
+    <ul className="p-3 space-y-1.5 bg-primary/4 flex-1 overflow-y-scroll">
       {items.map((item, index) => {
         return (
           <Tree

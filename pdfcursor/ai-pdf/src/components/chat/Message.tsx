@@ -14,7 +14,7 @@ export default function Message({ message, onCopyClick }: MessagePropType) {
       {message.role === "user" ? (
         <div className={"flex justify-end p-2 group"}>
           <div>
-            <p className={"bg-yellow-50 p-3 rounded-md"}>{message.content}</p>
+            <p className={"bg-primary/10 p-3 rounded-md"}>{message.content}</p>
             <div className="invisible flex justify-end group-hover:visible my-2">
               <Button onClick={onCopyClick} size={"icon"} variant={"ghost"}>
                 <CopyIcon />
