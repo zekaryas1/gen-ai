@@ -37,7 +37,7 @@ function PreviousFile({ file }: { file: LocalStorageFile }) {
         </div>
         <div className={"p-2 space-y-1.5"}>
           <div>
-            <p className={"font-bold line-clamp-2"}>{file.title}</p>
+            <p className={"font-bold line-clamp-2 uppercase"}>{file.title}</p>
             <p className={"text-sm line-clamp-1 text-ellipsis"}>
               {file.author}
             </p>
