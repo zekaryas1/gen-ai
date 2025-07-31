@@ -10,7 +10,7 @@ import { streamText } from "ai";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BrushCleaning, Send } from "lucide-react";
-import { FormEvent, useCallback } from "react";
+import { FormEvent, KeyboardEvent, useCallback } from "react";
 import { getSystemPrompt } from "@/utils/constants.utils";
 import { cn } from "@/lib/utils";
 
@@ -76,11 +76,18 @@ export default function ChatInterface(props: ChatInterfaceProps) {
     onClearContextClick();
   }, [onClearContextClick, setMessages]);
 
+  const handleEnterOnTextarea = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  };
+
   return (
     <div
       className={cn(
-        `flex flex-col h-full bg-gray-50`,
-        isOver ? "border-primary/50 bg-primary/10" : "border-gray-300",
+        `flex flex-col h-full bg-primary/4`,
+        isOver ? "border-primary/50 bg-primary/8" : "border-gray-300",
       )}
       ref={setNodeRef}
     >
@@ -133,6 +140,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
           required
           className={"max-h-32 bg-white"}
           onChange={handleInputChange}
+          onKeyDown={handleEnterOnTextarea}
         />
         <Button type={"submit"}>
           <Send /> Send
