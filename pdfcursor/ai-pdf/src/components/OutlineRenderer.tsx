@@ -7,7 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { DraggableOutlineItemData, OutlineItem } from "@/models/OutlineItem";
+import { OutlineItem } from "@/models/OutlineItem";
 import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ interface TreeProps {
   item: OutlineItem;
   onNavigate: (item: OutlineItem) => void;
   nextSiblingItem?: OutlineItem;
-  onOutlineStateChange: (item: OutlineItem) => void;
+  onOutlineStateChange: (id: string) => void;
   state: string[];
 }
 
@@ -34,39 +34,28 @@ export default function OutlineRenderer(props: OutlineRendererProps) {
   const outlineStateRef = useRef<Set<string>>(new Set<string>(state));
 
   const prepareOutlineStateData = useCallback(
-    (clickedItem: OutlineItem) => {
-      if (outlineStateRef.current.has(clickedItem.title)) {
-        outlineStateRef.current.delete(clickedItem.title);
+    (id: string) => {
+      if (outlineStateRef.current.has(id)) {
+        outlineStateRef.current.delete(id);
       } else {
-        outlineStateRef.current.add(clickedItem.title);
+        outlineStateRef.current.add(id);
       }
       onReceiveStateChange([...outlineStateRef.current.keys()]);
     },
     [onReceiveStateChange],
   );
 
-  const getNextSiblingItem = useMemo(
-    () => (item: OutlineItem) => {
-      const currentIndex = items.findIndex((it) => it.title === item.title);
-      const hasNextItem =
-        currentIndex !== -1 && currentIndex + 1 < items.length;
-      return hasNextItem ? items[currentIndex + 1] : nextSiblingItem;
-    },
-    [items, nextSiblingItem],
-  );
-
   return (
     <ul className="p-3 space-y-1.5 bg-gray-50 flex-1 overflow-y-scroll">
       {items.map((item, index) => {
-        const computedNextSibling = getNextSiblingItem(item);
-        const id = `${computedNextSibling?.title}-${index}`;
-
         return (
           <Tree
-            key={id}
-            id={id}
+            key={`${index}`}
+            id={`${index}`}
             item={item}
-            nextSiblingItem={computedNextSibling}
+            nextSiblingItem={
+              index + 1 < items.length ? items[index + 1] : nextSiblingItem
+            }
             onNavigate={onNavigate}
             onOutlineStateChange={prepareOutlineStateData}
             state={state}
@@ -87,17 +76,14 @@ function Tree(props: TreeProps) {
       currentItem: item,
       nextSiblingItem: nextSiblingItem,
       isCurrentItemLeaf: item.items?.length === 0,
-    } as DraggableOutlineItemData,
+    },
   });
 
-  const isOpen = useMemo(
-    () => state.findIndex((it) => it == item.title),
-    [item.title, state],
-  );
+  const isOpen = useMemo(() => state.findIndex((it) => it == id), [id, state]);
   const commonClasses = "hover:bg-primary/50 cursor-pointer rounded-md";
 
   const handleCollapseTriggerClick = () => {
-    onOutlineStateChange(item);
+    onOutlineStateChange(id);
   };
 
   if (!item.items?.length) {
@@ -149,7 +135,11 @@ function Tree(props: TreeProps) {
               id={`${id}-${index}`}
               item={subItem}
               onNavigate={onNavigate}
-              nextSiblingItem={nextSiblingItem}
+              nextSiblingItem={
+                index + 1 < item.items.length
+                  ? item.items[index + 1]
+                  : nextSiblingItem
+              }
               onOutlineStateChange={onOutlineStateChange}
               state={state}
             />

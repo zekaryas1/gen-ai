@@ -157,10 +157,18 @@ export default function PDFLayout({ pdf, virtuosoRef, state }: PDFLayoutProps) {
 
   // Chat
   const getContext = useCallback(async () => {
-    const pages = await pagesManager.outlineItemsToPageConverter(
-      dragState.droppedItems,
-    );
-    return pagesManager.getTextContext([...pages, currentPage]);
+    const droppedOutlineItemsPages =
+      await pagesManager.outlineItemsToPageConverter(dragState.droppedItems);
+    const currentPageAndSurrounding = [
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+    ];
+
+    return pagesManager.getTextContext([
+      ...droppedOutlineItemsPages,
+      ...currentPageAndSurrounding,
+    ]);
   }, [currentPage, dragState.droppedItems, pagesManager]);
 
   const clearChatContext = useCallback(() => {

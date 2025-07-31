@@ -67,7 +67,7 @@ export class PagesUtilityManager {
       async ({ currentItem, nextSiblingItem }) => {
         const start = (await this.getOutlineItemPageNumber(currentItem)) + 1;
         const end = nextSiblingItem
-          ? await this.getOutlineItemPageNumber(nextSiblingItem)
+          ? (await this.getOutlineItemPageNumber(nextSiblingItem)) + 1
           : this.pdf.numPages;
         return [start, end];
       },
@@ -89,24 +89,25 @@ export class PagesUtilityManager {
   }
 
   /**
-   * Fetches and concatenates text content from a list of pages, avoiding previously visited pages.
+   * Fetches and concatenates text content from a list of pages, avoiding invalid & visited pages.
    * Marks new pages as visited.
    * @param pagesToScan An array of page numbers to scan.
    * @returns A Promise resolving to a single string containing concatenated text.
    */
   public async getTextContext(pagesToScan: number[]): Promise<string> {
-    const newPages = Array.from(pagesToScan).filter(
-      (page) => !this.visitedPages.has(page),
+    const validNewPages = Array.from(pagesToScan).filter(
+      (page) =>
+        !this.visitedPages.has(page) && page > 0 && page <= this.pdf.numPages,
     );
 
-    newPages.forEach((page) => {
+    validNewPages.forEach((page) => {
       this.visitedPages.add(page);
     });
 
-    newPages.sort((a, b) => a - b);
+    validNewPages.sort((a, b) => a - b);
 
     const pageTexts = await Promise.all(
-      newPages.map(this.getPageTexts.bind(this)),
+      validNewPages.map(this.getPageTexts.bind(this)),
     );
 
     return pageTexts.flat().join(" ");
