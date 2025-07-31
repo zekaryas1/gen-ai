@@ -117,10 +117,12 @@ export default function PDFLayout({ pdf, virtuosoRef, state }: PDFLayoutProps) {
 
   const handleDragEnd = useCallback(
     (item: DraggableOutlineItemData) => {
-      //no duplicate items
+      //check no duplicate items
       if (
         dragState.droppedItems.findIndex(
-          (i) => i.currentItem.title === item.currentItem.title,
+          (i) =>
+            i.currentItem.title === item.currentItem.title &&
+            i.nextSiblingItem?.title === item.nextSiblingItem?.title,
         ) == -1
       ) {
         setDragState((prevState) => {
@@ -145,7 +147,9 @@ export default function PDFLayout({ pdf, virtuosoRef, state }: PDFLayoutProps) {
       return {
         ...prevState,
         droppedItems: prevState.droppedItems.filter(
-          (i) => i.currentItem.title !== item.currentItem.title,
+          (i) =>
+            i.currentItem.title !== item.currentItem.title ||
+            i.nextSiblingItem?.title !== item.nextSiblingItem?.title,
         ),
       };
     });

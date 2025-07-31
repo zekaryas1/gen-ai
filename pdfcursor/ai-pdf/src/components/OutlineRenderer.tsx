@@ -45,19 +45,26 @@ export default function OutlineRenderer(props: OutlineRendererProps) {
     [onReceiveStateChange],
   );
 
+  const getNextSiblingItem = useMemo(
+    () => (item: OutlineItem) => {
+      const currentIndex = items.findIndex((it) => it.title === item.title);
+      const hasNextItem =
+        currentIndex !== -1 && currentIndex + 1 < items.length;
+      return hasNextItem ? items[currentIndex + 1] : nextSiblingItem;
+    },
+    [items, nextSiblingItem],
+  );
+
   return (
     <ul className="p-3 space-y-1.5 bg-gray-50 flex-1 overflow-y-scroll">
       {items.map((item, index) => {
-        const currentIndex = items.findIndex((it) => it.title === item.title);
-        const computedNextSibling =
-          currentIndex !== -1 && currentIndex + 1 < items.length
-            ? items[currentIndex + 1]
-            : nextSiblingItem;
+        const computedNextSibling = getNextSiblingItem(item);
+        const id = `${computedNextSibling?.title}-${index}`;
 
         return (
           <Tree
-            key={`${item.title}-${index}`}
-            id={`${item.title}-${index}`}
+            key={id}
+            id={id}
             item={item}
             nextSiblingItem={computedNextSibling}
             onNavigate={onNavigate}
@@ -138,8 +145,8 @@ function Tree(props: TreeProps) {
         <SidebarMenuSub className="w-full space-y-0.5 py-1.5">
           {item.items.map((subItem, index) => (
             <Tree
-              key={`${subItem.title}-${index}`}
-              id={`${subItem.title}-${index}`}
+              key={`${id}-${index}`}
+              id={`${id}-${index}`}
               item={subItem}
               onNavigate={onNavigate}
               nextSiblingItem={nextSiblingItem}

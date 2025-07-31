@@ -112,11 +112,11 @@ export default function ChatInterface(props: ChatInterfaceProps) {
           })}
         />
       </div>
-      <div className="flex flex-col gap-2 p-2">
+      <div className="flex flex-col gap-2 p-2 max-h-4/6 overflow-y-scroll">
         {droppedOutlineItems.map((droppedOutlineItem) => {
           return (
             <DroppedOutlineItem
-              key={droppedOutlineItem.currentItem.title}
+              key={`${droppedOutlineItem.currentItem.title}-${droppedOutlineItem.nextSiblingItem?.title}`}
               draggableItemDataType={droppedOutlineItem}
               onRemoveOutlineItemClick={() => {
                 onRemoveOutlineItemClick(droppedOutlineItem);
