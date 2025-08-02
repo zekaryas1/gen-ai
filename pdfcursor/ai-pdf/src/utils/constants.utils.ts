@@ -5,6 +5,8 @@ export const MOBILE_BREAKPOINT = 768;
 
 export const APP_NAME = "AKU-AI-PDF";
 
+export const AI_MODEL_NAME = "gemini-2.0-flash";
+
 export const RESIZABLE_PANEL_DESKTOP_OPTIONS = {
   left: {
     defaultSize: 20,

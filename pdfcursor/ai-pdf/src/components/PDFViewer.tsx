@@ -19,20 +19,19 @@ interface PDFViewerPropsType {
   file: File;
 }
 
+const PDF_STATE_DEFAULT_VALUE = {
+  fileName: "",
+  outline: [],
+  lastPagePosition: 0,
+  outlineState: [],
+  panelOptions: RESIZABLE_PANEL_DESKTOP_OPTIONS,
+};
+
 export default function PDFViewer(props: PDFViewerPropsType) {
   const { file } = props;
   const pdfRef = useRef<PDFDocumentProxy>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  const pdfStateRef = useRef<PdfStateType>({
-    fileName: "",
-    outline: [],
-    lastPagePosition: 0,
-    outlineState: [],
-    panelOptions:
-      window.innerWidth < MOBILE_BREAKPOINT
-        ? RESIZABLE_PANEL_MOBILE_OPTIONS
-        : RESIZABLE_PANEL_DESKTOP_OPTIONS,
-  });
+  const pdfStateRef = useRef<PdfStateType>(PDF_STATE_DEFAULT_VALUE);
 
   const [pdfReady, setPdfReady] = useState(false);
 

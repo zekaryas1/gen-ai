@@ -11,8 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BrushCleaning, Send } from "lucide-react";
 import { FormEvent, KeyboardEvent, useCallback } from "react";
-import { getSystemPrompt } from "@/utils/constants.utils";
+import { AI_MODEL_NAME, getSystemPrompt } from "@/utils/constants.utils";
 import { cn } from "@/lib/utils";
+
+//markdown css
+import "./githubMarkdown.css";
+import "./codeHighLighter.css";
 
 interface ChatInterfaceProps {
   plainApiKey: string;
@@ -44,7 +48,7 @@ export default function ChatInterface(props: ChatInterfaceProps) {
         });
 
         const result = streamText({
-          model: google("gemini-2.0-flash"),
+          model: google(AI_MODEL_NAME),
           system: getSystemPrompt(context),
           messages,
         });

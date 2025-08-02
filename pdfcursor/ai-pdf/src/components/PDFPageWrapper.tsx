@@ -25,7 +25,13 @@ export default function PDFPageWrapper(props: PDFPageWrapperPropTypes) {
         width={width}
         loading={ScrollPlaceHolder}
       />
-      <p className={"bg-black text-white text-center"}>{pageNumber}</p>
+      <p
+        className={
+          "bg-primary-foreground text-neutral-700 border-y text-center"
+        }
+      >
+        {pageNumber}
+      </p>
     </>
   );
 }
