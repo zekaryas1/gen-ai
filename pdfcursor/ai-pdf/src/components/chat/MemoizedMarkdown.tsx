@@ -2,26 +2,31 @@ import { marked } from "marked";
 import { memo, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import highlight from "remark-sugar-high";
-import "./github.css";
 import CodeBlock from "@/components/chat/CodeBlock";
+import rehypeHighlight from "rehype-highlight";
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
   const tokens = marked.lexer(markdown);
   return tokens.map((token) => token.raw);
 }
 
+function findLanguageFromClassname(className: string) {
+  const languageSplit = className.split("language-");
+  const languageCollection = languageSplit.length > 1 ? languageSplit[1] : "";
+  return languageCollection.split(" ")[0];
+}
+
 const MemoizedMarkdownBlock = memo(
   ({ content }: { content: string }) => {
     return (
       <ReactMarkdown
-        remarkPlugins={[[remarkGfm, { singleTilde: false }], [highlight]]}
+        rehypePlugins={[[rehypeHighlight]]}
+        remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
         components={{
           code: (props) => {
             const { children, className } = props;
-            if (className && className.includes("sh-lang")) {
-              const shSplit = className.split("sh-lang--");
-              const language = shSplit.length > 1 ? shSplit[1] : "";
+            if (className) {
+              const language = findLanguageFromClassname(className);
               return <CodeBlock language={language}>{children}</CodeBlock>;
             }
 
@@ -46,9 +51,14 @@ export const MemoizedMarkdown = memo(
 
     return (
       <div className={"markdown-body grid grid-cols-1"}>
-        {blocks.map((block, index) => (
-          <MemoizedMarkdownBlock content={block} key={`${id}-block_${index}`} />
-        ))}
+        {blocks.map((block, index) => {
+          return (
+            <MemoizedMarkdownBlock
+              content={block}
+              key={`${id}-block_${index}`}
+            />
+          );
+        })}
       </div>
     );
   },

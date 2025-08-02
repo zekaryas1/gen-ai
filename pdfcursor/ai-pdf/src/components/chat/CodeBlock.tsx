@@ -32,7 +32,9 @@ export default function CodeBlock(props: CodeBlockProps) {
           <CopyIcon />
         </Button>
       </div>
-      <code ref={ref}>{children}</code>
+      <code className={`language-${language}`} ref={ref}>
+        {children}
+      </code>
     </>
   );
 }
