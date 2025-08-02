@@ -9,4 +9,6 @@ A collection of GEN AI applications, done as practice to learn RAG and AI agents
 - [Recommendation system](https://github.com/zekaryas1/gen-ai/tree/main/recsys):
   - Recommendation system using qDrant db and Sparse vector
 - [Agent development](https://github.com/zekaryas1/gen-ai/tree/main/adk_agents):
-  - Two AI agents using Google Agent development kit, ADK 
+  - AI agents using Google Agent development kit, aka, ADK 
+- [AKU AI PDF](https://github.com/zekaryas1/aku-ai-pdf)
+  - A web based PDF reader with AI integration, offline access and bring your own api key.
