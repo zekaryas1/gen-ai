@@ -1,0 +1,11 @@
+[project]
+name = "rag-article"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "llm>=0.26",
+    "llm-gpt4all>=0.4",
+    "llm-sentence-transformers>=0.3.2",
+]
