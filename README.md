@@ -1,6 +1,7 @@
 # GEN AI Practices
 
-A collection of GEN AI applications, done as practice to learn RAG and AI agents.
+A set of generative AI applications developed as practice projects to explore the world of RAG (Retrieval-Augmented Generation) and AI agents.
+
 
 - [Simple Rag](https://github.com/zekaryas1/gen-ai/tree/main/simple_rag):
     - A simple RAG from scratch to help you get answers from a document 
@@ -10,5 +11,8 @@ A collection of GEN AI applications, done as practice to learn RAG and AI agents
   - Recommendation system using qDrant db and Sparse vector
 - [Agent development](https://github.com/zekaryas1/gen-ai/tree/main/adk_agents):
   - AI agents using Google Agent development kit, aka, ADK 
+- Articles
+  - [Building with Generative AI: Lessons from 5 Projects Part 1: RAG - DEV Community](https://dev.to/index_of_zack/building-with-generative-ai-lessons-from-5-projects-part-1-rag-16gi)
+  - [Building with Generative AI: Lessons from 5 Projects Part 2: Embedding - DEV Community](https://dev.to/index_of_zack/building-with-generative-ai-lessons-from-5-projects-part-2-embedding-4bjj)
 - [AKU AI PDF](https://github.com/zekaryas1/aku-ai-pdf)
   - A web based PDF reader with AI integration, offline access and bring your own api key.

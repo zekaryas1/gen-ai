@@ -1,4 +1,8 @@
-## Semantic search
+## Project 1: RAG
+
+- [Building with Generative AI: Lessons from 5 Projects Part 1: RAG - DEV Community](https://dev.to/index_of_zack/building-with-generative-ai-lessons-from-5-projects-part-1-rag-16gi)
+
+### Semantic search
 - **Embedding models** (like transformer models) help with Semantic search. They take a piece of text and convert it into an **array of values** (vectors) that capture its **semantic meaning**.
 - If we have two such vectors, we can compare them to see how closely they’re related. For example, comparing “dog” with “loyal animal” will result in a higher match score than comparing it with “fastest animal”.
 	- Algorithms such as Cosine Similarity is used to find how close two vectors are.
@@ -17,7 +21,7 @@ uv run animal_embedding_match.py
 ```
 
 
-## Making the Response Coherent
+### Making the Response Coherent
 
 - We have related text snippets, but they’re **scattered**, possibly pulled from different documents. If we return them as-is, it might confuse the user because the response won’t appear coherent.
 - This is a perfect use case for **LLMs** (Large Language Models). They’re great at taking scattered data and generating **structured, coherent responses**.
@@ -31,7 +35,10 @@ uv run model_response.py
 Dogs are domesticated mammals that have been trained to perform various tasks such as hunting, herding, assisting people with disabilities, and providing companionship. They come in a variety of breeds, each with their unique characteristics and abilities. Some common breeds include Border Collies, German Shepherds, Golden Retrievers, and Poodles. Dogs are known for their exceptional sense of smell, which is up to 100,000 times stronger than that of humans. They are social animals and thrive in companionship with people or other dogs.
 ```
 
-## Transcript embedding 2 projects 
+## Project 2: Embeddings
+
+- [Building with Generative AI: Lessons from 5 Projects Part 2: Embedding - DEV Community](https://dev.to/index_of_zack/building-with-generative-ai-lessons-from-5-projects-part-2-embedding-4bjj)
+
 
 ### Transcript Embedding 1: in-memory dictionary
 
