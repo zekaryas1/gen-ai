@@ -4,8 +4,6 @@ from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 from google.adk import Runner
 from google.adk.agents import Agent
-from google.adk.agents.callback_context import CallbackContext
-from google.adk.models import LlmRequest, LlmResponse
 from google.adk.sessions import InMemorySessionService
 from google.adk.tools import ToolContext, BaseTool
 from google.genai import types  # For creating message Content/Parts
